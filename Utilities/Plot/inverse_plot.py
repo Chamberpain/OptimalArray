@@ -1,12 +1,8 @@
 from transition_matrix.makeplots.transition_matrix_plot import TransPlot
 from transition_matrix.makeplots.plot_utils import basemap_setup,transition_vector_to_plottable
-# from transition_matrix.makeplots.argo_data import SOCCOM
 import numpy as np
-from transition_matrix.makeplots.inversion.target_load import CM2p6Correlation,CM2p6VectorSpatialGradient,CM2p6VectorTemporalVariance,CM2p6VectorMean,GlodapCorrelation,GlodapVector
 import matplotlib.pyplot as plt
 import scipy
-import scipy.optimize
-from scipy import interpolate
 import random
 
 class InversionPlot():
@@ -36,35 +32,6 @@ class InversionPlot():
         for idx in idxs:
             cov[idx,idx]=target[idx]
         return scipy.sparse.csc_matrix(np.multiply(cor.todense(),var))
-
-    # def get_optimal_float_locations(self,float_number=1000,vector_exploration_factor=0,corr_exploration_factor=0):
-    #     """ accepts a target vecotr in sparse matrix form, returns the ideal float locations and weights to sample that"""
-    #     # vector = self.normalize_vector(vector,vector_exploration_factor)
-    #     # vector = self.remove_float_observations(vector)
-    #     if corr_exploration_factor:
-    #         self.normalize_correlation(corr_exploration_factor)
-    #     print 'I am starting the optimization'
-    #     optimize_fun = scipy.optimize.lsq_linear(self.cor.dot(self.base),np.ravel(self.target.data),bounds=(0,1.2),verbose=2,max_iter=20)
-    #     desired_vector = optimize_fun.x
-    #     print 'It is optimized'
-    #     y,x = zip(*[x for _,x in sorted(zip(desired_vector.tolist(),self.base.total_list.tolist()))[::-1][:float_number]])
-    #     bins_lat,bins_lon = self.base.bins_generator(base.degree_bins)
-    #     XX,YY,m = basemap_setup(bins_lat,bins_lon,base.traj_file_type) 
-    #     m.scatter(x,y,marker='*',color='g',s=34,latlon=True)
-    #     return m
-
-
-    # def alt_get_optimal_float_locations(self,noise):
-    #     for noise in [0.0001,0.001,0.01,0.1,1,10,100]:
-    #         denom = self.base.dot(self.cor.dot(self.base.T))+scipy.sparse.diags([noise]*self.base.shape[0])
-    #         inv_denom = scipy.linalg.inv(np.array(denom.todense()))
-    #         num = self.cor.dot(self.base.T)
-    #         output = num.todense().dot(inv_denom).dot(self.target.todense())
-    #         bins_lat,bins_lon = self.base.bins_generator(self.base.degree_bins)
-    #         XX,YY,m = basemap_setup(bins_lat,bins_lon,self.base.traj_file_type) 
-    #         out_plot = transition_vector_to_plottable(bins_lat,bins_lon,self.base.total_list,np.ravel(output))
-    #         m.pcolormesh(XX,YY,np.log(out_plot),vmin=0,vmax=np.log(cov.max()))
-    #         plt.show()
 
     def get_index_of_first_eigen_vector(self,p_hat):
         p_hat[p_hat<0]=0
@@ -212,7 +179,6 @@ def signal_to_noise_plot():
         plt.savefig('unobservd_'+variable)
         plt.close()
 
-
 def increased_float_plot():
     for variable in ['surf_dic','surf_pco2','surf_o2','100m_dic','100m_o2']:
 
@@ -257,124 +223,3 @@ def increased_float_plot():
         plt.title('Scaled '+variable+' Variance')
         plt.savefig('unobservd_float'+variable)
         plt.close()
-#  def normalize_vector(self,vector,exploration_factor):
-# #this needs some extensive unit testing, the normalization is very ad hock
-#         target_vector = vector-vector.min()
-#         target_vector = target_vector/target_vector.max()+1
-#         # target_vector = np.log(abs(target_vector))
-#         target_vector = target_vector+exploration_factor*target_vector.mean()*np.random.random(target_vector.shape)
-#         target_vector = target_vector/target_vector.max()
-#         print 'I have normalized the target vector'
-#         return target_vector
-
-
-
-
-#     def instrument_to_observation(self,vector):
-#         return (self.correlation.matrix.dot(self.transition_matrix)).dot(vector)
-
-#     def remove_float_observations(self,vector):
-#         float_result = self.instrument_to_observation(self.float_class.vector)
-#         float_result = float_result/float_result.max()
-#         vector = vector.flatten()-float_result
-#         vector = np.array(vector)
-#         vector[vector<0] = 0
-#         print 'I have subtracted off the SOCCOM vector'        
-#         return vector
-
-#     def loc_plot(self,variance=False,floats=500,corr_exploration_factor=0,vector_exploration_factor=0):
-#         x,y,desired_vector = self.get_optimal_float_locations(self.target.vector,float_number=floats,corr_exploration_factor=corr_exploration_factor,vector_exploration_factor=vector_exploration_factor)
-#         bins_lat,bins_lon = base.bins_generator(base.degree_bins)
-#         XX,YY,m = basemap_setup(bins_lat,bins_lon,base.traj_file_type)    
-#         dummy,dummy,m = self.target.plot(XX=XX,YY=YY,m=m)
-#         m.scatter(x,y,marker='*',color='g',s=34,latlon=True)
-#         m = self.float_class.plot(m=m)
-#         return (m,desired_vector)
-
-#     def objective_map(self):
-#         x,y,desired_vector = self.get_optimal_float_locations(self.target.vector,float_number=floats,corr_exploration_factor=corr_exploration_factor,vector_exploration_factor=vector_exploration_factor)
-#         data_model = self.data_model_cov_mat(x,y)
-#         data_data = self.data_data_cov_mat(x,y)
-#         error = self.objective_error_compute(data_data,data_model)
-
-#         XX,YY,m = basemap_setup(self.bins_lat,self.bins_lon,self.traj_file_type)
-#         plot_vector = transition_vector_to_plottable(self.bins_lat,self.bins_lon,self.list,error)
-#         m.pcolormesh(XX,YY,plot_vector,vmax=1,vmin=0)
-#         plt.colorbar()
-#         m.scatter(x,y,marker='*',color='g',s=34,latlon=True)
-
-#     def objective_error_compute(self,data_data,data_model):
-#         compute = data_model.dot(np.linalg.inv(data_data).dot(data_model.T)).diagonal()
-#         error = np.ones(compute.shape)-compute
-#         return error
-
-#     def data_model_cov_mat(self,x,y):
-#         data_model= np.zeros([len(self.list),len(x)])
-#         index_list = [list(_) for _ in zip(y,x)]
-#         for k,_ in enumerate(index_list):
-#             idx = self.list.index(_)
-#             vector = self.correlation.matrix[:,idx].todense()
-#             data_model[:,k] = np.array(vector).flatten()
-#         return data_model
-
-#     def data_data_cov_mat(self,x,y):        
-#         index_list = []
-#         for dummy in zip(y,x):
-#             index_list.append(self.list.index(list(dummy)))
-#         row,col = np.meshgrid(index_list,index_list)
-#         data_data = self.correlation.matrix[row.flatten(),col.flatten()]
-#         data_data = data_data.reshape(len(x),len(x))
-#         data_data = np.array(data_data)
-#         k = range(data_data.shape[0])
-#         data_data[k,k]=1
-#         return data_data
-
-#     @classmethod 
-#     def landschutzer(cls,transition_plot,var):
-#         return cls(transition_plot,LandschutzerCO2Flux(var),LandschutzerCorr())
-
-#     @classmethod 
-#     def modis(cls,var):
-#         return cls(MODISVector(var),MOIDSCorr())
-
-#     @classmethod 
-#     def glodap(cls,transition_plot,flux):
-#         transition_plot.get_direction_matrix()
-#         corr_matrix_class = GlodapCorrelation(transition_plot=transition_plot)
-#         target_vector_class = GlodapVector(transition_plot=transition_plot,flux=flux)
-#         float_class = SOCCOM(transition_plot=transition_plot)
-#         return cls(correlation_matrix_class=corr_matrix_class,target_vector_class=target_vector_class,float_class=float_class)
-
-
-# def individual_cruise_plot():
-#     trans_plot = TransitionPlot()
-#     trans_plot.get_direction_matrix()
-#     factor_list = [#0,2,10,
-#     50]
-#     for corr_factor in factor_list:
-#         for variance in [#'spatial',
-#         'time',
-#         #'mean'
-#         ]:
-#             for n,(variable,name) in enumerate([('100m_o2','$o_2$'),('100m_dic','dic')]):
-#                 plt.subplot(3,1,(n+1))
-#                 ip = InversionPlot.cm2p6(transition_plot=trans_plot,variable=variable,variance=variance)
-
-#     #             filename = '../../plots/cm2p6_'+variable+'_'+variance
-#                 m, desired_vector = ip.loc_plot(corr_exploration_factor=corr_factor)
-#                 ZZ = transition_vector_to_plottable(trans_plot.bins_lat,trans_plot.bins_lon,trans_plot.list,desired_vector)  
-#                 f = interpolate.interp2d(trans_plot.bins_lon, trans_plot.bins_lat, ZZ, kind='cubic')
-#                 a13p5_start = (-54,-3)
-#                 a13p5_end = (5,1)
-#                 m.plot(zip(a13p5_start,a13p5_end)[1],zip(a13p5_start,a13p5_end)[0],latlon=True,linewidth=7)
-#                 xnew = np.linspace(a13p5_start[1],a13p5_end[1],100)
-#                 ynew = np.linspace(a13p5_start[0],a13p5_end[0],100)
-#                 znew = [f(xnew[_], ynew[_])[0] for _ in range(len(xnew))]
-#                 dist = np.sqrt((xnew-xnew[0])**2+(ynew-ynew[0])**2)*111
-#                 plt.subplot(3,1,3)
-#                 plt.plot(dist,znew,label=name)
-#                 plt.xlabel('Distance Along Trackline')
-#                 plt.ylabel('Relative Variance Constrained')
-#             plt.legend()
-#             plt.show()
-

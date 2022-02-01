@@ -1,9 +1,7 @@
-from TransitionMatrix.Utilities.Plot.argo_data import BGC
 from TransitionMatrix.Utilities.Inversion.target_load import InverseGeo,InverseInstance,HInstance,InverseCCS,InverseGOM,InverseSOSE
 from TransitionMatrix.Utilities.Compute.trans_read import TransMat
 from GeneralUtilities.Data.lagrangian.bgc.bgc_read import BGCReader
 from GeneralUtilities.Data.lagrangian.argo.argo_read import ArgoReader,full_argo_list
-from GeneralUtilities.Data.lagrangian.argo.argo_read import full_argo_list
 from TransitionMatrix.Utilities.Plot.argo_data import Core,BGC
 import numpy as np
 import scipy.sparse
@@ -16,10 +14,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 plt.rcParams['font.size'] = '16'
 file_handler = FilePathHandler(ROOT_DIR,'array_design_final_figures')
-
-
-
-
 
 def figure_1():
 
