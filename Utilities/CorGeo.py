@@ -16,7 +16,7 @@ variable_translation_dict = {'thetao':'TEMP','so':'PSAL','ph':'PH_IN_SITU_TOTAL'
 
 class InverseGeo(GeoBase):
 	def __init__(self,*args,depth_idx = 0,l_mult = 5,variable_list=['thetao','so'],model_type='cm4',**kwargs):
-		super().__init__(*args,**kwargs)
+		super().__init__(*args,lat_sep=self.lat_sep,lon_sep=self.lon_sep,**kwargs)
 		self.ocean_shape = shapely.geometry.MultiPolygon([shapely.geometry.Polygon(self.coord_list)])
 		self.depth_idx = depth_idx
 		self.l_mult = l_mult
@@ -70,7 +70,7 @@ class InverseGlobal(InverseGeo):
 	coord_list = [[-180, 90], [180, 90], [180, -90], [-180, -90], [-180, 90]]
 	lat_sep=2
 	lon_sep=2
-	l=100
+	l=300
 
 
 class InverseIndian(InverseGeo):
@@ -237,8 +237,8 @@ class InverseCCS(InverseGeo):
 	facename = 'California Current'
 	plot_class = GlobalCartopy
 	region = 'ccs'
-	lat_sep=1
-	lon_sep=1
+	lat_sep=.5
+	lon_sep=.5
 	l=100
 	coord_list = [(-130.4035261964233,55),(-135,55),(-135,20.00),
 	(-104.6431889409656,20.000),(-105.4266560754428,23.05901404803846),(-113.2985172073168,31.65136326179817),
