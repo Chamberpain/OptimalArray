@@ -3,18 +3,40 @@ from TransitionMatrix.Utilities.ArgoData import Float,Core,BGC
 from OptimalArray.Utilities.__init__ import ROOT_DIR
 from GeneralUtilities.Filepath.instance import FilePathHandler
 import datetime
+from GeneralUtilities.Compute.list import VariableList
 import scipy.sparse
 from GeneralUtilities.Data.lagrangian.bgc.bgc_read import BGCReader
 from GeneralUtilities.Data.lagrangian.argo.argo_read import ArgoReader
 from GeneralUtilities.Data.lagrangian.argo.argo_read import full_argo_list
+from TransitionMatrix.Utilities.TransGeo import GeoBase
+import geopy
 
 variable_translation_dict = {'TEMP':'thetao','PSAL':'so','PH_IN_SITU_TOTAL':'ph','CHLA':'chl','DOXY':'o2'}
 
 
-class HInstance(scipy.sparse.csc_matrix):
-	def __init__(self,*args,trans_geo=None,**kwargs):
+class Float():
+	def __init__(self,position,sensors):
+		assert isinstance(position,geopy.Point)
+		assert isinstance(sensors,VariableList)
+		self.pos = position
+		self.sensors = sensors
+
+	def return_position_index(self,trans_geo):
+		assert issubclass(trans_geo.__class__,GeoBase)
+		return trans_geo.total_list.index(self.pos)
+
+	def return_sensor_index(self,trans_geo):
+		assert issubclass(trans_geo.__class__,GeoBase)
+		return [trans_geo.variable_list.index(x) for x in self.sensors]
+
+
+class HInstance():
+	def __init__(self,trans_geo=None):
 		self.trans_geo = trans_geo
-		super().__init__(*args,**kwargs)
+		self._list_of_floats = []
+
+	def add_float(self,float_):
+		self._list_of_floats.append(float_)
 
 	@staticmethod
 	def recent_floats(GeoClass, FloatClass):
@@ -53,15 +75,38 @@ class HInstance(scipy.sparse.csc_matrix):
 				sensor_idx_list[idx].append(k)
 		return HInstance.assemble_output(GeoClass,sensor_idx_list,bin_index_list)
 
-	@staticmethod 
-	def assemble_output(GeoClass,sensor_idx_list,bin_index_list):
-		block_mat = np.zeros([len(GeoClass.variable_list),1]).tolist()
-		for dummy in range(len(GeoClass.variable_list)):
-			block_mat[dummy] = np.zeros([len(GeoClass.total_list),len(sensor_idx_list)])
-		for k,(variable_list,idx) in enumerate(zip(sensor_idx_list,bin_index_list)):
-			for variable_idx in variable_list:
-				block_mat[variable_idx][idx,k]+=1
-		out = np.vstack(block_mat)
-		return (HInstance(out,trans_geo=GeoClass).T,bin_index_list)
+	def get_sensor_idx_list(self):
+		return [x.return_sensor_index(self.trans_geo) for x in self._list_of_floats]
 
+	def get_bin_idx_list(self):
+		return [x.return_position_index(self.trans_geo) for x in self._list_of_floats]
+
+	def base_return(self):
+		bin_idx_list = self.get_bin_idx_list()
+		unique_bin_idx_list = np.unique(bin_idx_list).tolist()
+		sensor_idx_list = self.get_sensor_idx_list()
+		block_mat = np.zeros([len(self.trans_geo.variable_list),1]).tolist()
+		for dummy in range(len(self.trans_geo.variable_list)):
+			block_mat[dummy] = np.zeros([len(self.trans_geo.total_list),len(unique_bin_idx_list)])
+		for variable_list,bin_idx in zip(sensor_idx_list,bin_idx_list):
+			k = unique_bin_idx_list.index(bin_idx)
+			for variable_idx in variable_list:
+				block_mat[variable_idx][bin_idx,k]+=1
+		out = np.vstack(block_mat)
+		idx,dummy,data = scipy.sparse.find(scipy.sparse.csc_matrix(out))
+		return (idx,data)
+
+	def return_H(self):
+		idx,data = self.base_return()
+		col_idx = np.sort(np.unique(idx))
+		row_idx = range(len(col_idx))
+		data = [1]*len(col_idx)
+		out = scipy.sparse.csc_matrix((data,(row_idx,col_idx)),shape = (max(row_idx)+1,len(self.trans_geo.variable_list)*len(self.trans_geo.total_list)))
+		return out
+
+	def return_noise_divider(self):
+		idx,data = self.base_return()
+		data = [x for _, x in sorted(zip(idx, data))]
+		col_idx = range(len(idx))
+		return data
 

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR
 from GeneralUtilities.Filepath.instance import FilePathHandler
+from TransitionMatrix.Utilities.TransGeo import get_cmap
 plt.rcParams['font.size'] = '16'
 file_handler = FilePathHandler(ROOT_DIR,'final_figures')
 
@@ -27,16 +28,18 @@ f, ((ax0, ax1),(ax2, ax3)) = plt.subplots(2, 2,figsize=(20,12), gridspec_kw={'he
 ss_plot = dummy.trans_geo.transition_vector_to_plottable(ss_e_vecs[:, 1])
 plot_holder = GlobalCartopy(ax=ax0,adjustable=True)
 XX,YY,ax0 = plot_holder.get_map()
+ax0.pcolormesh(XX,YY,XX != np.nan,cmap=get_cmap(),alpha=0.7,zorder=-10)
 XX,YY = cov_holder_ph.trans_geo.get_coords()
-ax0.pcolor(XX,YY,ss_plot,vmin=vmin,vmax=vmax)
+ax0.pcolormesh(XX,YY,ss_plot,vmin=vmin,vmax=vmax,cmap='RdYlBu')
 ax0.annotate('a', xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 
 
 ss_plot = dummy.trans_geo.transition_vector_to_plottable(ss_e_vecs[:, 7])
 plot_holder = GlobalCartopy(ax=ax1,adjustable=True)
 XX,YY,ax1 = plot_holder.get_map()
+ax1.pcolormesh(XX,YY,XX != np.nan,cmap=get_cmap(),alpha=0.7,zorder=-10)
 XX,YY = cov_holder_ph.trans_geo.get_coords()
-pcm = ax1.pcolor(XX,YY,ss_plot,vmin=vmin,vmax=vmax)
+pcm = ax1.pcolormesh(XX,YY,ss_plot,vmin=vmin,vmax=vmax,cmap='RdYlBu')
 ax1.annotate('b', xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 
 fig.colorbar(pcm,ax=[ax0,ax1],pad=.05,label='Eigenvector Weight',location='top')

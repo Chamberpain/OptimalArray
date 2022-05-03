@@ -40,7 +40,12 @@ class CovCM4(CovArray):
 				var_temp = dh[variable][:,self.trans_geo.depth_idx,:,:]
 				holder_list.append(var_temp[:,self.trans_geo.truth_array].data)
 			holder_total_list = np.vstack([x for _,x in sorted(zip(time_list,holder_list))])
-			holder_total_list = self.normalize_data(holder_total_list,self.label+'_'+variable,plot=False)
+			if variable=='chl':
+				holder_total_list = self.normalize_data(holder_total_list,lower_percent=0.8,upper_percent = 0.8)
+				print(holder_total_list.var().max())
+			else:
+				holder_total_list = self.normalize_data(holder_total_list,lower_percent=0.9,upper_percent = 0.9)				
+				print(holder_total_list.var().max())
 			array_variable_list.append((holder_total_list,variable))
 		del holder_total_list
 		del holder_list
@@ -94,9 +99,9 @@ class CovCM4(CovArray):
 	def load(cls,depth_idx):
 		holder = cls(depth_idx = depth_idx)
 		trans_geo = holder.trans_geo.set_l_mult(1)
-		submeso_cov = InverseInstance.load(trans_geo = holder.trans_geo)
-		trans_geo = holder.trans_geo.set_l_mult(5)
-		global_cov = InverseInstance.load(trans_geo = holder.trans_geo)
+		submeso_cov = InverseInstance.load(trans_geo = trans_geo)
+		trans_geo = holder.trans_geo.set_l_mult(2)
+		global_cov = InverseInstance.load(trans_geo = trans_geo)
 		holder.cov = global_cov+submeso_cov
 		return holder
 

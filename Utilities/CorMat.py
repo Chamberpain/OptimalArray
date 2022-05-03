@@ -212,7 +212,7 @@ class CovArray(object):
 		self.trans_geo.set_total_list(index_list)
 		self.trans_geo.set_truth_array(truth_array)
 		self.dist = self.get_dist()
-		self.variable_list = variable_list
+		assert isinstance(variable_list,VariableList)
 
 	def calculate_cov(self):
 		array_variable_list =self.stack_data()
@@ -242,33 +242,57 @@ class CovArray(object):
 			CovElement(ul,trans_geo=self.trans_geo,row_var=variable_1,col_var=variable_1).save()
 			CovElement(lr,trans_geo=self.trans_geo,row_var=variable_2,col_var=variable_2).save()
 
-	def normalize_data(self,data,label=None,percent=0.4,scale=1):
+	def normalize_data(self,data,lower_percent=0.8,upper_percent = 0.80, scale=1):
 		mean_removed = data-data.mean(axis=0)
 		# only consider deviations from the mean
-		data_scale = mean_removed.std(axis=0)
+		data_scale = mean_removed.var(axis=0)
 
 		dummy = 0
-		greater_mask = data_scale>(data_scale.max()-dummy*0.001*data_scale.mean())
-		while greater_mask.sum()<percent*len(data_scale): #stop below the 60th percentile
+		greater_mask = data_scale>(data_scale.max()-dummy*0.001*data_scale.mean()) #set first mask to choose everything greater than the maximum value
+		while greater_mask.sum()<lower_percent*len(data_scale): #stop below the 20th percentile
 			dummy +=1
 			greater_value = data_scale.max()-dummy*0.001*data_scale.mean() # increment in steps of 1000th of the mean
-			greater_mask = data_scale>greater_value 
+			greater_mask = data_scale>greater_value # mask will choose everything greater
 		print('greater value is '+str(greater_value))
 		dummy = 0
-		lesser_value = 0 
+		lesser_value = 4*greater_value
 		lesser_mask = data_scale<lesser_value
-		while lesser_mask.sum()<0: # this used to say "percent*len(data_scale):", but was changed
-			dummy +=1
-			lesser_value = data_scale.min()+dummy*0.001*data_scale.mean()
-			lesser_mask = data_scale<lesser_value
-		# because this is never less than zero, the lesser mask will not be applied
+		# while lesser_mask.sum()<upper_percent*len(data_scale): # this used to say "percent*len(data_scale):", but was changed
+		# 	dummy +=1
+		# 	lesser_value = data_scale.min()+dummy*0.001*data_scale.mean()
+		# 	lesser_mask = data_scale<lesser_value
 		print('lesser value is '+str(lesser_value))
-		data_scale[greater_mask]=greater_value*scale
-		data_scale[lesser_mask]=lesser_value*scale
-		data_scale[~greater_mask&~lesser_mask] = data_scale[~greater_mask&~lesser_mask]*scale
-		data_scale[data_scale==0]=10**-12
-		return mean_removed/data_scale # everything below the 60th percentile will have a standard deviation of 1. The effect of this will be to target high variance regions first
-		
+		data_scale[~greater_mask]=data_scale[~greater_mask]*scale #everything below 20th percentile will have var = 1
+		data_scale[greater_mask&lesser_mask]=greater_value*scale 
+		data_scale[~lesser_mask] = data_scale[~lesser_mask]*(greater_value)/(lesser_value)*scale # everything above the 95th percentile will have var = 
+		mean_removed[:,data_scale == 0]=0
+		data_scale[data_scale==0]=10**6
+		return_data = mean_removed/np.sqrt(data_scale)
+		return return_data # everything below the 60th percentile will have a standard deviation of 1. The effect of this will be to target high variance regions first
+
+	def subsample_variable(self,variable_list):
+		assert isinstance(variable_list,VariableList)
+		block_mat = np.zeros([len(variable_list),len(variable_list)]).tolist()
+		block_length = len(self.trans_geo.total_list)
+		var_idx_list = [self.trans_geo.variable_list.index(x) for x in variable_list]
+		for row_idx in var_idx_list:
+			start_row_idx = row_idx*block_length
+			end_row_idx = (row_idx+1)*block_length
+			for col_idx in var_idx_list:
+				start_col_idx = col_idx*block_length
+				end_col_idx = (col_idx+1)*block_length
+				data_matrix = self.cov[start_row_idx:end_row_idx,start_col_idx:end_col_idx]
+				block_mat[row_idx][col_idx] = data_matrix
+		out_mat = scipy.sparse.bmat(block_mat)
+		out_mat = InverseInstance(out_mat.tocsc(),trans_geo = self.trans_geo)
+		holder = self.__class__(depth_idx = self.trans_geo.depth_idx)
+		holder.cov = out_mat
+		holder.trans_geo = self.trans_geo
+		holder.trans_geo.variable_list = variable_list
+		holder.cov.trans_geo.variable_list = variable_list
+
+		return holder		
+
 	def subtract_e_vecs_return_space_space(self,e_vec_num=4):
 
 		block_mat = np.zeros([len(self.trans_geo.variable_list),len(self.trans_geo.variable_list)]).tolist()
@@ -378,7 +402,7 @@ class CovArray(object):
 		assert (self.global_cov.diagonal()>=0).all()
 
 	def save(self):
-		trans_geo = self.trans_geo.set_l_mult(5)
+		trans_geo = self.trans_geo.set_l_mult(2)
 		mat_obj = InverseInstance(self.global_cov,shape = self.global_cov.shape,trans_geo=trans_geo)
 		mat_obj.save()
 		trans_geo = self.trans_geo.set_l_mult(1)
@@ -407,17 +431,5 @@ class CovArray(object):
 			np.save(filename,dist)
 		return dist
 
-	def p_hat_calculate(self,H,index_list,noise_factor=2):
-		noise = scipy.sparse.csc_matrix.diagonal(self.cov)[index_list]
-		denom = H.dot(self.cov).dot(H.T)+scipy.sparse.diags(noise*noise_factor)
-		inv_denom = scipy.sparse.linalg.inv(denom)
-		if not type(inv_denom)==scipy.sparse.csc.csc_matrix:
-			inv_denom = scipy.sparse.csc.csc_matrix(inv_denom)  # this is for the case of 1x1 which returns as array for some reason
-		cov_subtract = self.cov.dot(H.T.dot(inv_denom).dot(H).dot(self.cov))
-		# diag = scipy.sparse.csc_matrix.diagonal(self.cov)
-		# for idx in np.where(diag<0)[0]:
-		# 	print(idx)
-		# 	cov[idx,idx]=0
-		p_hat = self.cov-cov_subtract
-		return p_hat,cov_subtract
+
 
