@@ -1,16 +1,16 @@
 from OptimalArray.Utilities.CorGeo import InverseGlobal,InverseIndian,InverseSO,InverseNAtlantic,InverseTropicalAtlantic,InverseSAtlantic,InverseNPacific,InverseTropicalPacific,InverseSPacific,InverseGOM,InverseCCS
-from GeneralUtilities.Filepath.instance import FilePathHandler
+from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from OptimalArray.Utilities.CorMat import CovArray,InverseInstance
 from GeneralUtilities.Compute.list import GeoList, VariableList
 from netCDF4 import Dataset
 import os
 import numpy as np
 import geopy
-
+import gsw
 
 class CovCM4(CovArray):
-	from OptimalArray.Data.__init__ import ROOT_DIR as DATA_DIR
-	data_directory = DATA_DIR + '/cm4'
+	from GeneralUtilities.Data.Download.cm4_download import data_folder
+	data_directory = data_folder
 	chl_depth_idx = 10
 	from OptimalArray.__init__ import ROOT_DIR
 	label = 'cm4'
@@ -52,10 +52,52 @@ class CovCM4(CovArray):
 		del var_temp
 		return array_variable_list
 
+	def make_density_plot(self):
+		from GeneralUtilities.Plot.Cartopy.eulerian_plot import GlobalCartopy
+		from matplotlib.colors import LogNorm
+		from OptimalArray.Utilities.Plot.__init__ import PLOT_DIR
+		file_handler = FilePathHandler(PLOT_DIR,'final_figures')
+
+		master_list = self.get_filenames()
+		filenames,variables = zip(*master_list)
+		temp_filenames = filenames[list(variables).index('thetao')]
+		sal_filenames = filenames[list(variables).index('so')]
+		sal_holder = []
+		temp_holder = []
+		for sal_filename,temp_filename in zip(sal_filenames,temp_filenames):
+			time_list = []
+			dh_sal = Dataset(sal_filename)
+			dh_temp = Dataset(temp_filename)
+			time_list.append(dh_sal['time'][0])
+			sal_temp = dh_sal['so'][:,self.trans_geo.depth_idx,:,:]
+			sal_holder.append(sal_temp[:,self.trans_geo.truth_array].data)
+			temp_temp = dh_temp['thetao'][:,self.trans_geo.depth_idx,:,:]
+			temp_holder.append(temp_temp[:,self.trans_geo.truth_array].data)
+		z = dh_sal["lev"][:][self.trans_geo.depth_idx]
+		temp_total_list = np.vstack([x for _,x in sorted(zip(time_list,temp_holder))])
+		sal_total_list = np.vstack([x for _,x in sorted(zip(time_list,sal_holder))])
+		density_total_list = np.zeros(sal_total_list.shape)
+		for kk in range(temp_total_list.shape[1]):
+			print(kk)
+			lat = self.trans_geo.total_list[kk].latitude
+			lon = self.trans_geo.total_list[kk].longitude
+			p = gsw.p_from_z(-z,lat)
+			for ii in range(temp_total_list.shape[0]):
+				SA = gsw.SA_from_SP(sal_total_list[ii,kk],p,lon,lat)
+				CT = gsw.CT_from_t(SA, temp_total_list[ii,kk], p)
+				rho = gsw.density.sigma0(SA,CT)
+				density_total_list[ii,kk] = rho		
+		plot_holder = GlobalCartopy(adjustable=True)
+		XX,YY,ax = plot_holder.get_map()
+		XX,YY = self.trans_geo.get_coords()
+		plt.pcolormesh(XX,YY,self.trans_geo.transition_vector_to_plottable(density_total_list.var(axis=0)),norm=LogNorm())
+		plt.colorbar(location='bottom',label='$(kg\ m^{-3})^2$')
+		plt.savefig(file_handler.out_file('density_'+str(self.trans_geo.depth_idx)))
+
 	def dimensions_and_masks(self):
-		files,var = self.get_filenames()[0]
+		var,files = self.get_filenames()[0]
 		file = files[0]
-		dh = Dataset(file)
+		dh = Dataset(str(file))
 		temp = dh[var][:,self.max_depth_lev,:,:]
 		depth_mask = ~temp.mask[0] # no need to grab values deepeer than 2000 meters
 		X,Y = np.meshgrid(np.floor(dh['lon'][:].data),np.floor(dh['lat'][:]).data)
@@ -83,17 +125,18 @@ class CovCM4(CovArray):
 
 	@staticmethod
 	def get_filenames():
-		master_list = []
-		for holder in os.walk(CovCM4.data_directory):
-			folder,dummy,files = holder
-			folder = folder[1:]
-			variable = os.path.basename(folder)
-			print(variable)
-			files = [os.path.join(folder,file) for file in files if variable in file]
-			if not files:
+		master_dict = {}
+		for file in os.listdir(CovCM4.data_directory):
+			if file == '.DS_Store':
 				continue
-			master_list.append((files,variable))
-		return master_list
+			filename = os.path.join(CovCM4.data_directory,file)
+			filename = filename[1:]
+			var = file.split('_')[0]
+			try:
+				master_dict[var].append(filename)
+			except KeyError:
+				master_dict[var] = [filename]
+		return list(master_dict.items())
 
 	@classmethod
 	def load(cls,depth_idx):

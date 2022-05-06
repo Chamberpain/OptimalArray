@@ -1,6 +1,6 @@
 import numpy as np
 from netCDF4 import Dataset
-from GeneralUtilities.Filepath.search import find_files
+from GeneralUtilities.Data.Filepath.search import find_files
 import os
 import time
 import matplotlib.pyplot as plt
@@ -10,7 +10,7 @@ from scipy.sparse import csc_matrix
 from scipy.sparse import _sparsetools
 from scipy.sparse.sputils import (get_index_dtype,upcast)
 from itertools import combinations
-from GeneralUtilities.Filepath.instance import FilePathHandler
+from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 import geopy
 import geopandas as gp
 import pickle
@@ -212,6 +212,7 @@ class CovArray(object):
 		self.trans_geo.set_total_list(index_list)
 		self.trans_geo.set_truth_array(truth_array)
 		self.dist = self.get_dist()
+		self.rossby = self.get_rossby()
 		assert isinstance(variable_list,VariableList)
 
 	def calculate_cov(self):
@@ -419,7 +420,8 @@ class CovArray(object):
 			for ii,coord1 in enumerate(self.trans_geo.total_list):
 				print(ii)
 				for jj,coord2 in enumerate(self.trans_geo.total_list):
-					dist[ii,jj] = geopy.distance.great_circle(coord1,coord2).km 
+					max_lat = max([coord1.latitude,coord2.latitude])
+					dist[ii,jj] = geopy.distance.great_circle(coord1,coord2).km/np.cos(np.deg2rad(max_lat))
 			assert (dist>=0).all()&(dist<=40000).all()
 			return dist
 
@@ -430,6 +432,3 @@ class CovArray(object):
 			dist = calculate_distance()
 			np.save(filename,dist)
 		return dist
-
-
-

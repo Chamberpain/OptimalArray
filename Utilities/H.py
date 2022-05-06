@@ -34,9 +34,13 @@ class HInstance():
 	def __init__(self,trans_geo=None):
 		self.trans_geo = trans_geo
 		self._list_of_floats = []
+		self._index_of_pos = []
+		self._index_of_sensors = []
 
 	def add_float(self,float_):
 		self._list_of_floats.append(float_)
+		self._index_of_pos.append(float_.return_position_index(self.trans_geo))
+		self._index_of_sensors.append(float_.return_sensor_index(self.trans_geo))
 
 	@staticmethod
 	def recent_floats(GeoClass, FloatClass):
@@ -76,10 +80,10 @@ class HInstance():
 		return HInstance.assemble_output(GeoClass,sensor_idx_list,bin_index_list)
 
 	def get_sensor_idx_list(self):
-		return [x.return_sensor_index(self.trans_geo) for x in self._list_of_floats]
+		return self._index_of_sensors
 
 	def get_bin_idx_list(self):
-		return [x.return_position_index(self.trans_geo) for x in self._list_of_floats]
+		return self._index_of_pos
 
 	def base_return(self):
 		bin_idx_list = self.get_bin_idx_list()

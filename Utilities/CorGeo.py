@@ -2,7 +2,7 @@ from GeneralUtilities.Compute.list import GeoList,VariableList
 from TransitionMatrix.Utilities.TransGeo import GeoBase
 from OptimalArray.Utilities.__init__ import ROOT_DIR
 from OptimalArray.Data.__init__ import ROOT_DIR as DATA_DIR
-from GeneralUtilities.Filepath.instance import FilePathHandler
+from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from GeneralUtilities.Plot.Cartopy.regional_plot import SOSECartopy,GOMCartopy,CCSCartopy,NAtlanticCartopy
 from GeneralUtilities.Plot.Cartopy.eulerian_plot import GlobalCartopy
 import os
@@ -59,6 +59,9 @@ class InverseGeo(GeoBase):
 
 	def make_dist_filename(self):
 		return self.file_handler.tmp_file('../../distance_lat_'+str(self.lat_sep)+'_lon_'+str(self.lon_sep))
+
+	def make_rossby_filename(self):
+		return self.file_handler.tmp_file('../../rossby_lat_'+str(self.lat_sep)+'_lon_'+str(self.lon_sep))
 
 	def make_array_filename(self,variable):
 		return self.file_handler.store_file('../../'+variable+'_variance_array')
