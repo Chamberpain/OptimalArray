@@ -3,7 +3,6 @@ from netCDF4 import Dataset
 from GeneralUtilities.Data.Filepath.search import find_files
 import os
 import time
-import matplotlib.pyplot as plt
 from GeneralUtilities.Compute.list import GeoList, VariableList
 import scipy.sparse.linalg
 from scipy.sparse import csc_matrix
@@ -12,7 +11,6 @@ from scipy.sparse.sputils import (get_index_dtype,upcast)
 from itertools import combinations
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 import geopy
-import geopandas as gp
 import pickle
 
 
@@ -212,7 +210,6 @@ class CovArray(object):
 		self.trans_geo.set_total_list(index_list)
 		self.trans_geo.set_truth_array(truth_array)
 		self.dist = self.get_dist()
-		self.rossby = self.get_rossby()
 		assert isinstance(variable_list,VariableList)
 
 	def calculate_cov(self):
@@ -316,90 +313,110 @@ class CovArray(object):
 					num += 1
 					print(num)
 		out_mat = np.block(block_mat)
-		space_space_submeso = out_mat # assemble full covariance matrix from individual elements
+		space_space_submeso = np.block(block_mat) # assemble full covariance matrix from individual elements
 		assert (space_space_submeso.diagonal()>=0).all()
-		space_space_global = InverseInstance(space_space_submeso.shape,trans_geo=self.trans_geo)
-		eig_vals, eig_vecs = scipy.sparse.linalg.eigs(space_space_submeso,k=4)
-		eig_vecs = eig_vecs.real
-		eig_vals = eig_vals.real
-		dist_filter = self.dist<5*self.trans_geo.l # maximum distance we will have non zero values with gaspari and cohn scaling
-		row_val,col_val = np.where(np.block([[dist_filter]*len(self.trans_geo.variable_list)]*len(self.trans_geo.variable_list)))
-		submeso_data = space_space_submeso[(row_val,col_val)]
-		space_space_submeso = InverseInstance((submeso_data,(row_val,col_val)),shape=space_space_submeso.shape,trans_geo = self.trans_geo)
-		del dist_filter
-		del submeso_data
-
+		space_space_global = np.zeros(space_space_submeso.shape)
+		eig_vals, eig_vecs = scipy.sparse.linalg.eigs(scipy.sparse.csc_matrix(space_space_submeso),k=4)
+		print('i have calculated the eigenvalues')
 		for k in range(len(eig_vals)):
 			print('calculating eigen vector '+str(k))
 			e_val = eig_vals[k]
 			e_vec = eig_vecs[:,k]
-			remove_e_vec = e_val*np.outer(e_vec,e_vec)/(e_vec**2).sum()
-			e_vec_data = remove_e_vec[(row_val,col_val)]
-			remove_e_vec = InverseInstance((e_vec_data,(row_val,col_val)),shape=space_space_submeso.shape,trans_geo = self.trans_geo)
+			e_vec = e_vec.reshape([len(e_vec),1])
+			remove_e_vec = e_val.real*e_vec.real.dot(e_vec.real.T)/(e_vec.real**2).sum()
+			# e_vec_data = remove_e_vec[(row_val,col_val)]
+			# remove_e_vec = InverseInstance((e_vec_data,(row_val,col_val)),shape=space_space_submeso.shape,trans_geo = self.trans_geo)
 			space_space_submeso -= remove_e_vec
-			if (space_space_submeso.diagonal()<0).any():
-				space_space_submeso -= space_space_submeso.diagonal().min()*scipy.sparse.eye(space_space_submeso.shape[0]) # matrices cannot have negative variance and is usually rounding error
+			# if (space_space_submeso.diagonal()<0).any():
+			# 	space_space_submeso -= space_space_submeso.diagonal().min()*scipy.sparse.eye(space_space_submeso.shape[0]) # matrices cannot have negative variance and is usually rounding error
 			space_space_global += remove_e_vec
-			if (space_space_global.diagonal()<0).any():
-				space_space_global -= space_space_global.diagonal().min()*scipy.sparse.eye(space_space_global.shape[0]) # matrices cannot have negative variance and is usually rounding error
+			# if (space_space_global.diagonal()<0).any():
+			# 	space_space_global -= space_space_global.diagonal().min()*scipy.sparse.eye(space_space_global.shape[0]) # matrices cannot have negative variance and is usually rounding error
+		# submeso_space_space_eig_vals = np.linalg.eigvals(space_space_submeso)
+		# global_space_space_eig_vals = np.linalg.eigvals(space_space_global)
+		# print(submeso_space_space_eig_vals.min())
+		# print(global_space_space_eig_vals.min())
+		# print(submeso_space_space_eig_vals.max())
+		# print(global_space_space_eig_vals.max())
+		# print(out_mat-space_space_global-space_space_submeso)
 		return (space_space_submeso,space_space_global)
 
+
+	def make_scaling(self,holder):
+		cov_scale = 1
+		total_list = []
+		for k in range(len(self.trans_geo.variable_list)):
+			temp_list = [cov_scale*scipy.sparse.csc_array(holder)]*len(self.trans_geo.variable_list)
+			temp_list[k] = scipy.sparse.csc_array(holder) # allows the covariance of cross variables to be reduced
+			total_list.append(temp_list)
+		return scipy.sparse.bmat(total_list)
+
+	def calculate_scaling(self,l=300):
+		assert (self.dist>=0).all()
+		c = np.sqrt(10/3.)*l
+#For this scaling we use something derived by gassbury and coehn to not significantly change eigen spectrum of 
+#local support scaling function
+#last peice wise poly 		
+		scaling = np.zeros(self.dist.shape)
+		# self.dist[self.dist>2*c]=0
+		second_poly_mask = (self.dist>c)&(self.dist<2*c)
+		self.dist_holder = self.dist[second_poly_mask].flatten()
+		assert (self.dist_holder.min()>c)&(self.dist_holder.max()<2*c)
+		second_poly = 1/12.*(self.dist_holder/c)**5 \
+		-1/2.*(self.dist_holder/c)**4 \
+		+5/8.*(self.dist_holder/c)**3 \
+		+5/3.*(self.dist_holder/c)**2 \
+		-5.*(self.dist_holder/c) \
+		+4 \
+		- 2/3.*(c/self.dist_holder)
+		second_poly[second_poly<0]=0 
+		scaling[second_poly_mask]=second_poly
+
+		first_poly_mask = (self.dist<c)
+		self.dist_holder = self.dist[first_poly_mask].flatten()
+		assert (self.dist_holder.min()>=0)&(self.dist_holder.max()<c)
+
+		first_poly = -1/4.*(self.dist_holder/c)**5 \
+		+1/2.*(self.dist_holder/c)**4 \
+		+5/8.*(self.dist_holder/c)**3 \
+		-5/3.*(self.dist_holder/c)**2 \
+		+1
+		assert (first_poly>0).all()
+		scaling[first_poly_mask]=first_poly
+		return scaling
+
 	def scale_cov(self):
-		def make_scaling(holder):
-			cov_scale = 0.7 
-			total_list = []
-			for k in range(len(self.trans_geo.variable_list)):
-				temp_list = [cov_scale*holder]*len(self.trans_geo.variable_list)
-				temp_list[k] = holder # reduce the covariance of cross variables by 30%
-				total_list.append(temp_list)
-			return scipy.sparse.csc_matrix(np.block(total_list))
 
-		def calculate_scaling(dist, lat_sep=None,lon_sep=None,l=300):
-			assert (dist>=0).all()
-			c = np.sqrt(10/3.)*l
-	#For this scaling we use something derived by gassbury and coehn to not significantly change eigen spectrum of 
-	#local support scaling function
-	#last peice wise poly 		
-			scaling = np.zeros(dist.shape)
-			# dist[dist>2*c]=0
-			second_poly_mask = (dist>c)&(dist<2*c)
-			dist_holder = dist[second_poly_mask].flatten()
-			assert (dist_holder.min()>c)&(dist_holder.max()<2*c)
-			second_poly = 1/12.*(dist_holder/c)**5 \
-			-1/2.*(dist_holder/c)**4 \
-			+5/8.*(dist_holder/c)**3 \
-			+5/3.*(dist_holder/c)**2 \
-			-5.*(dist_holder/c) \
-			+4 \
-			- 2/3.*(c/dist_holder)
-			second_poly[second_poly<0]=0 
-			scaling[second_poly_mask]=second_poly
+		def check_evals(mat):
+			evals,evecs = scipy.sparse.linalg.eigs(scipy.sparse.csc_matrix(mat),k=1, sigma=-.5)
+			assert(evals.min()>-10**(-10))			
 
-			first_poly_mask = (dist<c)
-			dist_holder = dist[first_poly_mask].flatten()
-			assert (dist_holder.min()>=0)&(dist_holder.max()<c)
+		def check_symmetric(mat):
+			check_mat = mat-mat.T
+			assert(abs(check_mat).max()<10**-10)	
 
-			first_poly = -1/4.*(dist_holder/c)**5 \
-			+1/2.*(dist_holder/c)**4 \
-			+5/8.*(dist_holder/c)**3 \
-			-5/3.*(dist_holder/c)**2 \
-			+1
-			assert (first_poly>0).all()
-			scaling[first_poly_mask]=first_poly
-			return scaling
+		def plot_evals(mat):
+			fig = plt.figure()
+			ax = fig.add_subplot(1, 1, 1)
+			evals = np.linalg.eigvals(mat)
+			evals = np.sort(evals)
+			ax.plot(-evals[evals<0])
+			ax.set_yscale('log')
+			plt.show()
+
 
 		submeso_cov,global_cov = self.subtract_e_vecs_return_space_space() #get the global and submeso covariances
-		assert (submeso_cov.diagonal()>=0).all()
-		assert (global_cov.diagonal()>=0).all()
-		holder = calculate_scaling(self.dist,lat_sep=self.trans_geo.lat_sep,lon_sep=self.trans_geo.lon_sep,l=self.trans_geo.l) # calculate the gaspari and cohn localization for the submeso lengthscale
-		submeso_scaling = make_scaling(holder) #make the localization that reduces cross covariances
-		self.submeso_cov = submeso_cov.multiply(submeso_scaling)
-		assert (self.submeso_cov.diagonal()>=0).all()
+		assert (submeso_cov.diagonal().min()>-10**-8)
+		assert (global_cov.diagonal().min()>-10**-8)
+		holder = self.calculate_scaling(l=self.trans_geo.l) # calculate the gaspari and cohn localization for the submeso lengthscale
+		submeso_scaling = self.make_scaling(holder) #make the localization that reduces cross covariances
+		self.submeso_cov = scipy.sparse.csc_matrix(submeso_cov).multiply(submeso_scaling)
 		del submeso_scaling
-		holder = calculate_scaling(self.dist,lat_sep=self.trans_geo.lat_sep,lon_sep=self.trans_geo.lon_sep,l=self.trans_geo.l*5) # calculate the gaspari and cohn localization for the global lengthscale
-		global_scaling = make_scaling(holder)
+
+		holder = self.calculate_scaling(l=self.trans_geo.l*2) # calculate the gaspari and cohn localization for the global lengthscale
+		global_scaling = self.make_scaling(holder) 
 		del holder
-		self.global_cov = global_cov.multiply(global_scaling)
+		self.global_cov = scipy.sparse.csc_matrix(global_cov).multiply(global_scaling)
 		assert (self.global_cov.diagonal()>=0).all()
 
 	def save(self):
@@ -420,9 +437,11 @@ class CovArray(object):
 			for ii,coord1 in enumerate(self.trans_geo.total_list):
 				print(ii)
 				for jj,coord2 in enumerate(self.trans_geo.total_list):
-					max_lat = max([coord1.latitude,coord2.latitude])
-					dist[ii,jj] = geopy.distance.great_circle(coord1,coord2).km/np.cos(np.deg2rad(max_lat))
-			assert (dist>=0).all()&(dist<=40000).all()
+					# max_lat = max([coord1.latitude,coord2.latitude])
+					dist[ii,jj] = geopy.distance.great_circle(coord1,coord2).km#/np.cos(np.deg2rad(max_lat))
+					if (dist[ii,jj]!=0)&(dist[jj,ii]!=0):
+						assert(abs(dist[ii,jj]-dist[jj,ii])<10**-6)
+			assert (dist>=0).all()&(dist<=26000).all()
 			return dist
 
 		filename = self.trans_geo.make_dist_filename()

@@ -76,6 +76,15 @@ class InverseGlobal(InverseGeo):
 	l=300
 
 
+class InverseGlobalSubsample(InverseGeo):
+	plot_class = GlobalCartopy
+	region = 'global_subsampled'
+	coord_list = [[-180, 90], [180, 90], [180, -90], [-180, -90], [-180, 90]]
+	lat_sep=6
+	lon_sep=6
+	l=300
+
+
 class InverseIndian(InverseGeo):
 	facecolor = 'maroon'
 	facename = 'Indian'

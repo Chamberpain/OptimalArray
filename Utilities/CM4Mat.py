@@ -1,4 +1,4 @@
-from OptimalArray.Utilities.CorGeo import InverseGlobal,InverseIndian,InverseSO,InverseNAtlantic,InverseTropicalAtlantic,InverseSAtlantic,InverseNPacific,InverseTropicalPacific,InverseSPacific,InverseGOM,InverseCCS
+from OptimalArray.Utilities.CorGeo import InverseGlobal,InverseGlobalSubsample,InverseIndian,InverseSO,InverseNAtlantic,InverseTropicalAtlantic,InverseSAtlantic,InverseNPacific,InverseTropicalPacific,InverseSPacific,InverseGOM,InverseCCS
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from OptimalArray.Utilities.CorMat import CovArray,InverseInstance
 from GeneralUtilities.Compute.list import GeoList, VariableList
@@ -27,7 +27,7 @@ class CovCM4(CovArray):
 	def stack_data(self):
 		master_list = self.get_filenames()
 		array_variable_list = []
-		for files,variable in master_list:
+		for variable,files in master_list:
 			time_list = []
 			holder_list = []
 			if self.trans_geo.depth_idx>self.chl_depth_idx:
@@ -106,7 +106,6 @@ class CovCM4(CovArray):
 		geolist = GeoList([geopy.Point(x) for x in list(zip(Y.ravel(),X.ravel()))],lat_sep=self.trans_geo.lat_sep,lon_sep=self.trans_geo.lon_sep)
 		oceans_list = []
 		for k,dummy in enumerate(geolist.to_shapely()):
-			print(k)
 			oceans_list.append(self.trans_geo.ocean_shape.contains(dummy))	# only choose coordinates within the ocean basin of interest
 
 		total_mask = (depth_mask)&(subsample_mask)&(np.array(oceans_list).reshape(X.shape))
@@ -118,11 +117,20 @@ class CovCM4(CovArray):
 
 	@staticmethod
 	def get_depths():
-		files,var = CovCM4.get_filenames()[0]
+		var,files = CovCM4.get_filenames()[0]
 		file = files[0]
 		dh = Dataset(file)
 		return dh["lev_bnds"][:]
 
+	def get_units(self):
+		var_list = []
+		var_dict = dict(self.get_filenames())
+		for var in self.trans_geo.variable_list:
+			filename = var_dict[var][0]
+			dh = Dataset(filename)
+			var_list.append(dh[var].units)
+		return var_list
+		
 	@staticmethod
 	def get_filenames():
 		master_dict = {}
@@ -150,6 +158,11 @@ class CovCM4(CovArray):
 
 class CovCM4Global(CovCM4):
 	trans_geo_class = InverseGlobal
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovCM4GlobalSubsample(CovCM4):
+	trans_geo_class = InverseGlobalSubsample
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
 

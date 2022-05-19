@@ -3,6 +3,8 @@ from OptimalArray.Utilities.H import Float, HInstance
 from OptimalArray.Utilities.CM4Mat import CovCM4Global
 from GeneralUtilities.Compute.list import VariableList
 import geopy
+from OptimalArray.Utilities.Plot.Figure_16 import FutureFloatTrans
+
 
 depth_idx = 6
 cov_holder = CovCM4Global.load(depth_idx = depth_idx)
@@ -21,6 +23,27 @@ class TestFloatMethods1(unittest.TestCase):
 	def test_sensor_index(self):
 		self.assertEqual(self.Float.return_sensor_index(cov_holder.trans_geo),self.sensor_idx,'Incorrect Sensor Indexing')
 
+class TestRandomH(unittest.TestCase):
+
+	def TestSensorDist(self):
+		holder = HInstance.random_floats(cov_holder.trans_geo, 100, [1, 1, 0, 0, 1])
+		self.assertTrue(np.unique(holder._index_of_sensors).tolist()==[0, 1,4])
+		holder = HInstance.random_floats(cov_holder.trans_geo, 100, [1, 1, 0, .03, 1])
+		self.assertTrue([0, 1,3,4] in np.unique(holder._index_of_sensors).tolist())
+		num = len([x for x in holder._index_of_sensors if x == [0, 1, 3, 4]])
+		self.assertTrue(num<=4)
+
+	def TestArraySize(self):
+		size = 100
+		holder = HInstance.random_floats(cov_holder.trans_geo, size, [0.5, 1, 1, 0.5, 1])
+		self.assertTrue(len(holder._index_of_sensors)==size)
+		self.assertTrue(len(holder._index_of_pos)==size)
+
+	def TestArrayDistribution(self):
+		size = 1000
+		holder = HInstance.random_floats(cov_holder.trans_geo, size, [0.5, 0.5, 0.5, 0.5, 0.5])
+		self.assertTrue(len(np.unique(holder._index_of_sensors))==2**5)
+		self.assertTrue(len(np.unique(holder._index_of_pos))>=990)
 
 class TestBaseHMethods1(unittest.TestCase):
 	def setUp(self):
@@ -44,7 +67,6 @@ class TestBaseHMethods1(unittest.TestCase):
 		self.assertEqual(len(data),self.array_size*len(cov_holder.trans_geo.variable_list))
 		self.assertEqual(data[0],2)
 		self.assertTrue(all([x==1 for x in data[1:]]))
-
 
 	def test_return_noise_divider(self):
 		noise_divider = self.H.return_noise_divider()

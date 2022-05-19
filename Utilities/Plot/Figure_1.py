@@ -13,7 +13,6 @@ file_handler = FilePathHandler(ROOT_DIR,'final_figures')
 aggregate_argo_list(read_class=BGCReader)
 bgc_locations = BGC.recent_pos_list(BGCReader)
 
-
 full_argo_list()
 core_locations = Core.recent_pos_list(ArgoReader)
 
