@@ -11,7 +11,6 @@ from GeneralUtilities.Data.Filepath.instance import FilePathHandler, make_folder
 from OptimalArray.Data.__init__ import ROOT_DIR
 from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR as PLOT_DIR
 from OptimalArray.Utilities.Utilities import make_P_hat
-from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from TransitionMatrix.Utilities.TransMat import TransMat
 from TransitionMatrix.Utilities.Utilities import shiftgrid
 import cartopy.crs as ccrs
