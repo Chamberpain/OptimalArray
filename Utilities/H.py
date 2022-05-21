@@ -22,8 +22,11 @@ class Float():
 		self.sensors = sensors
 		self.ID = ID
 		self.date_deployed = date_deployed
-		self.date_death = self.date_deployed+datetime.timedelta(days=(365*5))
-
+		if date_deployed:
+			self.date_death = self.date_deployed+datetime.timedelta(days=(365*5))
+		else:
+			self.date_death = None
+			
 	def return_position_index(self,trans_geo):
 		assert issubclass(trans_geo.__class__,GeoBase)
 		return trans_geo.total_list.index(self.pos)

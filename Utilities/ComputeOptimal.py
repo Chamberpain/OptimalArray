@@ -10,6 +10,7 @@ import scipy
 from GeneralUtilities.Compute.list import VariableList
 from OptimalArray.Utilities.Utilities import make_P_hat,get_index_of_first_eigen_vector
 import os 
+from numpy.random import normal
 
 # plt.rcParams['font.size'] = '16'
 file_handler = FilePathHandler(ROOT_DIR,'final_figures')
@@ -79,15 +80,17 @@ def make_random():
 					save_array(cov_holder,H_random,p_hat_random,kk,label)
 
 def make_noise_matrix(cov_holder,SNR):
+	print('makeing the SNR matrix ...')
+	print('SNR = ',SNR)
 	l=cov_holder.trans_geo.l*2
 	scale = cov_holder.calculate_scaling(l=l)
 	holder = cov_holder.dist
-	gaussian = np.exp(-holder**2/(2*l)) # 2l because we will square this value
+	gaussian = np.exp(-holder**2/(4*l)) # 4l because we will square this value and it will become 2l
 	full_gaussian = cov_holder.make_scaling(gaussian)
 	scaling_list = (np.sqrt(cov_holder.cov.diagonal()/SNR)).tolist()
 	row_idxs,col_idxs,data = scipy.sparse.find(full_gaussian)
 	for k in range(len(scaling_list)):
-		data[k] = data[k]*scaling_list[col_idxs[k]]
+		data[k] = normal(scale=data[k]*scaling_list[col_idxs[k]])
 	noise_matrix = scipy.sparse.csc_matrix((data,(row_idxs,col_idxs)),shape = cov_holder.cov.shape)
 	noise_matrix = noise_matrix.dot(noise_matrix.T)
 	# evals,evecs = scipy.sparse.linalg.eigs(noise_matrix, 1, sigma=-1)
@@ -109,11 +112,11 @@ def make_SNR():
 			H_ideal,p_hat_diagonal = load_array(cov_holder,100,'optimal')
 			H_random = HInstance.random_floats(cov_holder.trans_geo, 100, [1]*len(cov_holder.trans_geo.variable_list))
 			cov_snr = make_noise_matrix(cov_holder,SNR)
-			cov_holder.cov + cov_snr
-			p_hat_ideal = make_P_hat(cov_snr,H_ideal,noise_factor=4)
-			p_hat_random = make_P_hat(cov_snr,H_random,noise_factor=4)
+			cov_out = cov_holder.cov + cov_snr
+			p_hat_ideal = make_P_hat(cov_out,H_ideal,noise_factor=4)
+			p_hat_random = make_P_hat(cov_out,H_random,noise_factor=4)
 			data = (H_ideal._index_of_pos,H_random._index_of_pos,p_hat_ideal.diagonal(),p_hat_random.diagonal())
 			print('saved H instance '+str(kk))
 			save(filepath,data)
 
-make_random()
+# make_random()
