@@ -62,7 +62,7 @@ def make_optimal():
 			save_array(cov_holder,H_ideal,p_hat_ideal,kk,'optimal')
 
 def make_random():
-	for depth_idx in [2,4,6,8,10,12,14,16,18,20,22,24,26]:
+	for depth_idx in [2,4,6,8,10,12,14,16,18,20,22,24][::-1]:
 		cov_holder = CovCM4Global.load(depth_idx = depth_idx)
 		for float_num in range(0,501,50):
 			for kk in range(10):
@@ -119,4 +119,4 @@ def make_SNR():
 			print('saved H instance '+str(kk))
 			save(filepath,data)
 
-# make_random()
+make_random()
