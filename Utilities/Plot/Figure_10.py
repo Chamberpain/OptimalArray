@@ -56,8 +56,8 @@ shallow_dict_list = dict(zip(idx,[[] for x in idx]))
 
 
 deep_dict = np.zeros([len(random_floatnum_sorted),len(random_depth_sorted)]).flatten().tolist()
-data_dict = dict(zip(cov_holder.trans_geo.variable_list,[deep_dict_list]*len(cov_holder.trans_geo.variable_list)))
-data_dict['chl']=shallow_dict_list
+data_dict = dict(zip(cov_holder.trans_geo.variable_list,[{},{},{},{},{}]))
+
 for filename in filenames:
 	temp_var_list = copy.deepcopy(cov_holder.trans_geo.variable_list)
 	float_num,depth_idx,kk = random_decode_filename(filename)
@@ -73,8 +73,10 @@ for filename in filenames:
 
 	H_array,p_hat = load(filename)
 	for var,data in zip(temp_var_list,np.split(p_hat,len(temp_var_list))):
-		data_dict[var][idx].append(data.sum())
-
+		try:
+			data_dict[var][idx].append(data.sum())
+		except KeyError:
+			data_dict[var][idx] = [data.sum()]
 
 H_array, p_hat = load('//Users/paulchamberlain/Projects/OptimalArray/Data/OptimalArray/tmp/random_300_2_6')
 float_list = GeoList(cov_holder.trans_geo.total_list[x] for x in H_array)
