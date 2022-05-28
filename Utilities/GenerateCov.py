@@ -4,8 +4,8 @@ from OptimalArray.Utilities.MOM6Mat import CovMOM6CCS
 import gc
 import os
 
-for covclass in [CovCM4NPacific]:
-	for depth in [2,4,6,8,10,12,14,16,18,20,22,24,26]:
+for covclass in [CovCM4GlobalSubsample]:
+	for depth in [2,4,6,8,10,12,14,16,18,20,22,24]:
 		print('depth idx is '+str(depth))
 		dummy = covclass(depth_idx = depth)
 		if os.path.isfile(dummy.trans_geo.make_inverse_filename()):

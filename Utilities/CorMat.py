@@ -263,7 +263,7 @@ class CovArray(object):
 		data_scale[~greater_mask]=data_scale[~greater_mask]*scale #everything below 20th percentile will have var = 1
 		data_scale[greater_mask&lesser_mask]=greater_value*scale 
 		data_scale[~lesser_mask] = data_scale[~lesser_mask]*(greater_value)/(lesser_value)*scale # everything above the 95th percentile will have var = 
-		mean_removed[:,data_scale == 0]=0
+		mean_removed[:,data_scale == 0]=np.random.uniform(-0.01,0.01,len(mean_removed[:,data_scale == 0].ravel())).reshape(mean_removed[:,data_scale == 0].shape)
 		data_scale[data_scale==0]=10**6
 		return_data = mean_removed/np.sqrt(data_scale)
 		return return_data # everything below the 60th percentile will have a standard deviation of 1. The effect of this will be to target high variance regions first
@@ -346,12 +346,12 @@ class CovArray(object):
 		cov_scale = 1
 		total_list = []
 		for k in range(len(self.trans_geo.variable_list)):
-			temp_list = [cov_scale*scipy.sparse.csc_array(holder)]*len(self.trans_geo.variable_list)
-			temp_list[k] = scipy.sparse.csc_array(holder) # allows the covariance of cross variables to be reduced
+			temp_list = [cov_scale*scipy.sparse.csc_matrix(holder)]*len(self.trans_geo.variable_list)
+			temp_list[k] = scipy.sparse.csc_matrix(holder) # allows the covariance of cross variables to be reduced
 			total_list.append(temp_list)
 		return scipy.sparse.bmat(total_list)
 
-	def calculate_scaling(self,l=300):
+	def calculate_scaling(self,l=3):
 		assert (self.dist>=0).all()
 		c = np.sqrt(10/3.)*l
 #For this scaling we use something derived by gassbury and coehn to not significantly change eigen spectrum of 
@@ -431,7 +431,7 @@ class CovArray(object):
 		return CovElement.load(self.trans_geo,row_var,col_var)
 
 	def get_dist(self):
-		def calculate_distance():
+		def calculate_distance_km():  #this is left as a holdover from a previous version
 			import geopy.distance
 			dist = np.zeros([len(self.trans_geo.total_list),len(self.trans_geo.total_list)])
 			for ii,coord1 in enumerate(self.trans_geo.total_list):
@@ -444,10 +444,16 @@ class CovArray(object):
 			assert (dist>=0).all()&(dist<=26000).all()
 			return dist
 
+		def calculate_distance_degree():
+			self.trans_geo.get_direction_matrix()
+			dist = np.sqrt((self.trans_geo.north_south*self.trans_geo.lon_sep)**2 + (self.trans_geo.east_west*self.trans_geo.lat_sep)**2)
+			assert (dist>=0).all()&(dist<=360).all()
+			return dist
+
 		filename = self.trans_geo.make_dist_filename()
 		try:
 			dist = np.load(filename+'.npy')
 		except IOError:
-			dist = calculate_distance()
+			dist = calculate_distance_degree()
 			np.save(filename,dist)
 		return dist
