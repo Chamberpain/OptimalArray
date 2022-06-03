@@ -244,6 +244,18 @@ class CovArray(object):
 		mean_removed = data-data.mean(axis=0)
 		# only consider deviations from the mean
 		data_scale = mean_removed.var(axis=0)
+		for idx in np.where(data_scale == 0)[0].tolist():
+			print('index = ',idx,' has zero variance, so we are creating an artifical time series')
+			mean_var = data_scale[data_scale != 0].mean()
+			base_series = np.random.uniform(0, 1, mean_removed.shape[0])
+			scaled_series = mean_var/base_series.var()*base_series
+			mean_removed[:,idx] = scaled_series
+			assert (mean_removed[:,idx] - scaled_series < 10**-6).all()
+		data_scale = mean_removed.var(axis=0)
+		assert len(data_scale[data_scale == 0]) == 0
+		# amp = data_scale[data_scale!=0].min()
+		# mean_removed[:,data_scale == 0]=np.random.uniform(0,amp,len(mean_removed[:,data_scale == 0].ravel())).reshape(mean_removed[:,data_scale == 0].shape)
+		# data_scale = mean_removed.var(axis=0)
 
 		dummy = 0
 		greater_mask = data_scale>(data_scale.max()-dummy*0.001*data_scale.mean()) #set first mask to choose everything greater than the maximum value
@@ -263,9 +275,8 @@ class CovArray(object):
 		data_scale[~greater_mask]=data_scale[~greater_mask]*scale #everything below 20th percentile will have var = 1
 		data_scale[greater_mask&lesser_mask]=greater_value*scale 
 		data_scale[~lesser_mask] = data_scale[~lesser_mask]*(greater_value)/(lesser_value)*scale # everything above the 95th percentile will have var = 
-		mean_removed[:,data_scale == 0]=np.random.uniform(-0.01,0.01,len(mean_removed[:,data_scale == 0].ravel())).reshape(mean_removed[:,data_scale == 0].shape)
-		data_scale[data_scale==0]=10**6
 		return_data = mean_removed/np.sqrt(data_scale)
+		assert(len(data_scale[data_scale==0])==0)
 		return return_data # everything below the 60th percentile will have a standard deviation of 1. The effect of this will be to target high variance regions first
 
 	def subsample_variable(self,variable_list):
@@ -431,18 +442,6 @@ class CovArray(object):
 		return CovElement.load(self.trans_geo,row_var,col_var)
 
 	def get_dist(self):
-		def calculate_distance_km():  #this is left as a holdover from a previous version
-			import geopy.distance
-			dist = np.zeros([len(self.trans_geo.total_list),len(self.trans_geo.total_list)])
-			for ii,coord1 in enumerate(self.trans_geo.total_list):
-				print(ii)
-				for jj,coord2 in enumerate(self.trans_geo.total_list):
-					# max_lat = max([coord1.latitude,coord2.latitude])
-					dist[ii,jj] = geopy.distance.great_circle(coord1,coord2).km#/np.cos(np.deg2rad(max_lat))
-					if (dist[ii,jj]!=0)&(dist[jj,ii]!=0):
-						assert(abs(dist[ii,jj]-dist[jj,ii])<10**-6)
-			assert (dist>=0).all()&(dist<=26000).all()
-			return dist
 
 		def calculate_distance_degree():
 			self.trans_geo.get_direction_matrix()
