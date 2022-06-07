@@ -3,6 +3,7 @@ from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from OptimalArray.Utilities.CorMat import CovArray,InverseInstance
 from GeneralUtilities.Compute.list import GeoList, VariableList
 from netCDF4 import Dataset
+from GeneralUtilities.Data.pickle_utilities import save,load
 import os
 import numpy as np
 import geopy
@@ -27,10 +28,11 @@ class CovCM4(CovArray):
 	def stack_data(self):
 		master_list = self.get_filenames()
 		array_variable_list = []
+		data_scale_list = []
 		for variable,files in master_list:
 			time_list = []
 			holder_list = []
-			if self.trans_geo.depth_idx>self.chl_depth_idx:
+			if self.trans_geo.depth_idx>=self.chl_depth_idx:
 				if variable=='chl':
 					continue
 			for file in files:
@@ -41,15 +43,17 @@ class CovCM4(CovArray):
 				holder_list.append(var_temp[:,self.trans_geo.truth_array].data)
 			holder_total_list = np.vstack([x for _,x in sorted(zip(time_list,holder_list))])
 			if variable=='chl':
-				holder_total_list = self.normalize_data(holder_total_list,lower_percent=0.8,upper_percent = 0.8)
+				holder_total_list,data_scale = self.normalize_data(holder_total_list,lower_percent=0.8,upper_percent = 0.8)
 				print(holder_total_list.var().max())
 			else:
-				holder_total_list = self.normalize_data(holder_total_list,lower_percent=0.9,upper_percent = 0.9)				
+				holder_total_list,data_scale = self.normalize_data(holder_total_list,lower_percent=0.9,upper_percent = 0.9)				
 				print(holder_total_list.var().max())
 			array_variable_list.append((holder_total_list,variable))
+			data_scale_list.append((data_scale,variable))
 		del holder_total_list
 		del holder_list
 		del var_temp
+		save(self.trans_geo.make_datascale_filename(),data_scale_list)
 		return array_variable_list
 
 	def make_density_plot(self):
@@ -101,8 +105,11 @@ class CovCM4(CovArray):
 		temp = dh[var][:,self.max_depth_lev,:,:]
 		depth_mask = ~temp.mask[0] # no need to grab values deepeer than 2000 meters
 		X,Y = np.meshgrid(np.floor(dh['lon'][:].data),np.floor(dh['lat'][:]).data)
-		X[X>180] = X[X>180]-360
-		subsample_mask = ((X%self.trans_geo.lon_sep==0)&(Y%self.trans_geo.lat_sep==0))
+		X[X>=180] = X[X>=180]-360
+		lat_grid = self.trans_geo.get_lat_bins()
+		lon_grid = self.trans_geo.get_lon_bins()
+
+		subsample_mask = ((np.isin(X, lon_grid))&(np.isin(Y, lat_grid)))
 		geolist = GeoList([geopy.Point(x) for x in list(zip(Y.ravel(),X.ravel()))],lat_sep=self.trans_geo.lat_sep,lon_sep=self.trans_geo.lon_sep)
 		oceans_list = []
 		for k,dummy in enumerate(geolist.to_shapely()):

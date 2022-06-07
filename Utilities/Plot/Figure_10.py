@@ -1,6 +1,8 @@
 from OptimalArray.Utilities.CM4Mat import CovCM4Global
-from GeneralUtilities.Plot.Cartopy.eulerian_plot import GlobalCartopy
+from OptimalArray.Utilities.CorGeo import InverseGlobal
 
+from GeneralUtilities.Plot.Cartopy.eulerian_plot import GlobalCartopy
+from GeneralUtilities.Data.pickle_utilities import load
 from GeneralUtilities.Data.lagrangian.argo.argo_read import ArgoReader,aggregate_argo_list,full_argo_list
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from OptimalArray.Data.__init__ import ROOT_DIR
@@ -11,6 +13,7 @@ from GeneralUtilities.Data.pickle_utilities import load
 from TransitionMatrix.Utilities.TransGeo import get_cmap
 import datetime
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 from TransitionMatrix.Utilities.ArgoData import Core,BGC
 from GeneralUtilities.Compute.list import GeoList
@@ -58,7 +61,8 @@ shallow_dict_list = dict(zip(idx,[[] for x in idx]))
 deep_dict = np.zeros([len(random_floatnum_sorted),len(random_depth_sorted)]).flatten().tolist()
 data_dict = dict(zip(cov_holder.trans_geo.variable_list,[{},{},{},{},{}]))
 
-for filename in filenames:
+for k,filename in enumerate(filenames):
+	print(k,' of ',len(filenames))
 	temp_var_list = copy.deepcopy(cov_holder.trans_geo.variable_list)
 	float_num,depth_idx,kk = random_decode_filename(filename)
 	if depth_idx >= cov_holder.chl_depth_idx:
@@ -70,9 +74,14 @@ for filename in filenames:
 		continue
 	idx = (float_num,depth_idx)
 
+	dummy = InverseGlobal(depth_idx = depth_idx)
+	datascale = load(dummy.make_datascale_filename())
+	data,var = zip(*datascale)
+	datascale_dict = dict(zip(var,data))
 
 	H_array,p_hat = load(filename)
 	for var,data in zip(temp_var_list,np.split(p_hat,len(temp_var_list))):
+		data = data*datascale_dict[var]**2
 		try:
 			data_dict[var][idx].append(data.sum())
 		except KeyError:
@@ -80,10 +89,13 @@ for filename in filenames:
 
 H_array, p_hat = load('//Users/paulchamberlain/Projects/OptimalArray/Data/OptimalArray/tmp/random_300_2_6')
 float_list = GeoList(cov_holder.trans_geo.total_list[x] for x in H_array)
+datascale = load(cov_holder.trans_geo.make_datascale_filename())
+data,var = zip(*datascale)
+datascale_dict = dict(zip(var,data))
 data = np.split(p_hat,len(cov_holder.trans_geo.variable_list))[cov_holder.trans_geo.variable_list.index('ph')]
-
-x_offset = 4
-label_offset_list = [(x_offset,0.5),(x_offset,0.5),(x_offset,0.5),(x_offset,0.6),(x_offset,0.5)]
+data = data*datascale_dict['ph']**2
+x_offset = 7
+label_offset_list = [(x_offset+3,0.5),(x_offset,0.5),(x_offset,0.5),(x_offset,0.6),(x_offset+6,0.5)]
 ax_list = []
 
 fig = plt.figure(figsize=(14,14))
@@ -94,7 +106,7 @@ XX,YY,ax0 = plot_holder.get_map()
 XX,YY = cov_holder.trans_geo.get_coords()
 data = cov_holder.trans_geo.transition_vector_to_plottable(data)
 ax0.pcolormesh(XX,YY,XX != np.nan,cmap=get_cmap(),alpha=0.7,zorder=-10)
-pcm = ax0.pcolormesh(XX,YY,data)
+pcm = ax0.pcolormesh(XX,YY,data,norm=matplotlib.colors.LogNorm())
 ax0.scatter(lons,lats,c='orange',s=Core.marker_size,zorder=11,label = 'Random')
 cbar = fig.colorbar(pcm, orientation="horizontal", pad=0.14)
 cbar.ax.set_xlabel('Unconstrained Variance')
@@ -118,10 +130,11 @@ for kk,temp_dict in enumerate(data_dict.values()):
 		f_idx = unique_floatnum_list.index(float_num)
 		d_idx = unique_depth_list.index(depth_idx)
 		dummy_array[d_idx,f_idx] = np.mean(data)
-	ax.pcolor(XX,YY,dummy_array)
+	pcm = ax.pcolor(XX,YY,dummy_array)
 	ax.annotate(annotate_list[kk], xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 	plt.gca().invert_yaxis()
 	ax.get_xaxis().set_visible(False)
+	ax.set_yscale('log')
 	ax.set_ylabel('Depth (m)')
 	cb = plt.colorbar(pcm)
 	cb.ax.set_ylabel(colorbar_label[kk],rotation=90)
@@ -130,7 +143,7 @@ ax.get_xaxis().set_visible(True)
 ax.set_xlabel('Deployed Floats')
 ax_list[3].get_xaxis().set_visible(True)
 ax_list[3].set_xlabel('Deployed Floats')
-plt.subplots_adjust(hspace=0.1)
+plt.subplots_adjust(hspace=0.2)
 plt.subplots_adjust(wspace=.45)
 plt.savefig(plot_handler.out_file('Figure_10'))
 plt.close()

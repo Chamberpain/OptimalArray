@@ -6,17 +6,19 @@ import os
 import shutil
 
 def calculate_cov():
-	for covclass in [CovCM4Global]:
-		for depth in [8,26]:
-		# for depth in [2,4,6,8,10,12,14,16,18,20,22,24]:
+	for covclass in [CovCM4GlobalSubsample]:
+		# for depth in [8,26]:
+		for depth in [2,4,6,8,10,12,14,16,18,20,22,24,26]:
 			print('depth idx is '+str(depth))
 			dummy = covclass(depth_idx = depth)
 			if os.path.isfile(dummy.trans_geo.make_inverse_filename()):
 				continue
 			try:
+				# dummy.stack_data()
 				dummy.calculate_cov()
 				dummy.scale_cov()
 			except FileNotFoundError:
+				# dummy.stack_data()
 				dummy.calculate_cov()
 				dummy.scale_cov()
 			dummy.save()
@@ -36,3 +38,5 @@ def move_files():
 				shutil.move(base_filepath,new_filepath)
 			except OSError:
 				pass
+
+calculate_cov()

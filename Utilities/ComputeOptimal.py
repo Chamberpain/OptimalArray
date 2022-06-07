@@ -1,5 +1,6 @@
 from OptimalArray.Utilities.CorMat import InverseInstance
-from OptimalArray.Utilities.CM4Mat import CovCM4Global
+from OptimalArray.Utilities.CM4Mat import CovCM4GlobalSubsample, CovCM4
+from OptimalArray.Utilities.CorMat import CovArray 
 from OptimalArray.Utilities.H import HInstance,Float
 from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR
 from OptimalArray.Data.__init__ import ROOT_DIR
@@ -9,8 +10,12 @@ import numpy as np
 import scipy
 from GeneralUtilities.Compute.list import VariableList
 from OptimalArray.Utilities.Utilities import make_P_hat,get_index_of_first_eigen_vector
+from OptimalArray.Utilities.CorGeo import InverseGeo
 import os 
 from numpy.random import normal
+from GeneralUtilities.Plot.Cartopy.eulerian_plot import GlobalCartopy
+import copy
+
 
 # plt.rcParams['font.size'] = '16'
 file_handler = FilePathHandler(ROOT_DIR,'final_figures')
@@ -37,9 +42,63 @@ def save_array(cov_holder,H_out,p_hat_out,kk,label):
 	print('saved H instance '+str(kk))
 	save(filepath,data)
 
+class OptimalGlobal(InverseGeo):
+	plot_class = GlobalCartopy
+	region = 'optimal_global'
+	coord_list = [[-180, 90], [180, 90], [180, -90], [-180, -90], [-180, 90]]
+	lat_sep=4
+	lon_sep=4
+	l=2
+
+class CovCM4Optimal(CovArray):
+	trans_geo_class = OptimalGlobal
+	from GeneralUtilities.Data.Download.cm4_download import data_folder
+	data_directory = data_folder
+	from OptimalArray.__init__ import ROOT_DIR
+	label = 'cm4'
+	max_depth_lev = 25  #this corresponds to 2062.5 meters 
+
+	def __init__(self,*args,**kwargs):
+		variable_list = VariableList(['thetao_2','so_2','ph_2','chl_2','o2_2','thetao_6','so_6','ph_6','chl_6','o2_6','thetao_14','so_14','ph_14','o2_14','thetao_18','so_18','ph_18','o2_18'])
+		super().__init__(*args,depth_idx=0,variable_list = variable_list,**kwargs)
+
+	@classmethod
+	def load(cls):
+		cov_2 = CovCM4GlobalSubsample.load(2)
+		cov_6 = CovCM4GlobalSubsample.load(6)
+		cov_14 = CovCM4GlobalSubsample.load(14)
+		cov_18 = CovCM4GlobalSubsample.load(18)
+		holder = cls()
+		holder.cov = InverseInstance(scipy.sparse.block_diag((cov_2.cov,cov_6.cov,cov_14.cov,cov_18.cov)))
+		return holder
+
+	@staticmethod
+	def get_filenames():
+		master_dict = {}
+		for file in os.listdir(CovCM4.data_directory):
+			if file == '.DS_Store':
+				continue
+			filename = os.path.join(CovCM4.data_directory,file)
+			filename = filename[1:]
+			var = file.split('_')[0]
+			try:
+				master_dict[var].append(filename)
+			except KeyError:
+				master_dict[var] = [filename]
+		return list(master_dict.items())
+
+CovCM4Optimal.dimensions_and_masks = CovCM4.dimensions_and_masks
+
+
+
+
+
+
+
+
+
 def make_optimal():
-	depth_idx = 2
-	cov_holder = CovCM4Global.load(depth_idx = depth_idx)
+	cov_holder = CovCM4Optimal.load()
 	p_hat_ideal = cov_holder.cov[:]
 	H_ideal = HInstance(trans_geo=cov_holder.trans_geo)
 	kk = 0 
@@ -61,23 +120,6 @@ def make_optimal():
 			p_hat_ideal = make_P_hat(cov_holder.cov,H_ideal,noise_factor=4)
 			save_array(cov_holder,H_ideal,p_hat_ideal,kk,'optimal')
 
-def make_random():
-	for depth_idx in [2,4,6,8,10,12,14,16,18,20,22,24]:
-		cov_holder = CovCM4Global.load(depth_idx = depth_idx)
-		for float_num in range(0,501,50):
-			for kk in range(10):
-				print ('depth = '+str(depth_idx)+', float_num = '+str(float_num)+', kk = '+str(kk))
-				label = 'random_'+str(float_num)
-				filepath = make_filename(label,cov_holder.trans_geo.depth_idx,kk)
-				if os.path.exists(filepath):
-					continue
-				save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
-				H_random = HInstance.random_floats(cov_holder.trans_geo, float_num, [1]*len(cov_holder.trans_geo.variable_list))
-				if float_num ==0: 
-					save_array(cov_holder,H_random,cov_holder.cov,kk,label)					
-				else:
-					p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
-					save_array(cov_holder,H_random,p_hat_random,kk,label)
 
 def make_noise_matrix(cov_holder,SNR):
 	print('makeing the SNR matrix ...')
@@ -119,4 +161,3 @@ def make_SNR():
 			print('saved H instance '+str(kk))
 			save(filepath,data)
 
-make_random()

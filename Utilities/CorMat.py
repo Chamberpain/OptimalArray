@@ -273,11 +273,14 @@ class CovArray(object):
 		# 	lesser_mask = data_scale<lesser_value
 		print('lesser value is '+str(lesser_value))
 		data_scale[~greater_mask]=data_scale[~greater_mask]*scale #everything below 20th percentile will have var = 1
+		assert len(data_scale[data_scale == 0]) == 0
 		data_scale[greater_mask&lesser_mask]=greater_value*scale 
+		assert len(data_scale[data_scale == 0]) == 0
 		data_scale[~lesser_mask] = data_scale[~lesser_mask]*(greater_value)/(lesser_value)*scale # everything above the 95th percentile will have var = 
+		assert len(data_scale[data_scale == 0]) == 0
 		return_data = mean_removed/np.sqrt(data_scale)
 		assert(len(data_scale[data_scale==0])==0)
-		return return_data # everything below the 60th percentile will have a standard deviation of 1. The effect of this will be to target high variance regions first
+		return (return_data, data_scale) # everything below the 60th percentile will have a standard deviation of 1. The effect of this will be to target high variance regions first
 
 	def subsample_variable(self,variable_list):
 		assert isinstance(variable_list,VariableList)
@@ -302,8 +305,7 @@ class CovArray(object):
 
 		return holder		
 
-	def subtract_e_vecs_return_space_space(self,e_vec_num=4):
-
+	def assemble_covariance(self):
 		block_mat = np.zeros([len(self.trans_geo.variable_list),len(self.trans_geo.variable_list)]).tolist()
 		num = 0
 		for var in self.trans_geo.variable_list: 
@@ -323,9 +325,12 @@ class CovArray(object):
 					block_mat[idx_2][idx_1]=cov.T
 					num += 1
 					print(num)
-		out_mat = np.block(block_mat)
-		space_space_submeso = np.block(block_mat) # assemble full covariance matrix from individual elements
-		assert (space_space_submeso.diagonal()>=0).all()
+		out_mat = np.block(block_mat)		
+		assert (out_mat.diagonal()>=0).all()
+		return out_mat
+
+	def subtract_e_vecs_return_space_space(self,e_vec_num=4):
+		space_space_submeso = self.assemble_covariance() # assemble full covariance matrix from individual elements
 		space_space_global = np.zeros(space_space_submeso.shape)
 		eig_vals, eig_vecs = scipy.sparse.linalg.eigs(scipy.sparse.csc_matrix(space_space_submeso),k=4)
 		print('i have calculated the eigenvalues')

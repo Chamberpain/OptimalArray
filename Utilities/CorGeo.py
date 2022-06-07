@@ -66,6 +66,11 @@ class InverseGeo(GeoBase):
 	def make_array_filename(self,variable):
 		return self.file_handler.store_file('../../'+variable+'_variance_array')
 
+	def make_datascale_filename(self):
+		return self.file_handler.tmp_file('datascale')
+
+	def make_diagnostic_plot_folder(self):
+		return self.file_handler.tmp_file('diag_plots')
 
 class InverseGlobal(InverseGeo):
 	plot_class = GlobalCartopy
@@ -80,8 +85,8 @@ class InverseGlobalSubsample(InverseGeo):
 	plot_class = GlobalCartopy
 	region = 'global_subsampled'
 	coord_list = [[-180, 90], [180, 90], [180, -90], [-180, -90], [-180, 90]]
-	lat_sep=6
-	lon_sep=6
+	lat_sep=4
+	lon_sep=4
 	l=3
 
 

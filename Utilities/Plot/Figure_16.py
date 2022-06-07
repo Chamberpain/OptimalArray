@@ -1,6 +1,5 @@
 from OptimalArray.Utilities.Plot.Figure_11_15 import make_recent_float_H
 from OptimalArray.Utilities.CM4Mat import CovCM4Global
-from OptimalArray.Utilities.Plot.Figure_22 import get_units
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR as PLOT_DIR
 from OptimalArray.Data.__init__ import ROOT_DIR
@@ -13,6 +12,8 @@ from GeneralUtilities.Data.lagrangian.bgc.bgc_read import BGCReader
 from GeneralUtilities.Data.lagrangian.argo.argo_read import full_argo_list, aggregate_argo_list
 import numpy as np
 from OptimalArray.Utilities.CM4Mat import CovCM4
+from OptimalArray.Utilities.CorGeo import InverseGlobal
+
 
 
 plt.rcParams['font.size'] = '22'
@@ -30,6 +31,11 @@ depths = cov_holder.get_depths().data[depth_list,0]
 for depth in depth_list:
 	var_list = cov_holder.trans_geo.variable_list[:]
 	filename = data_file_handler.tmp_file(str(depth)+'_present_base')
+	dummy = InverseGlobal(depth_idx = depth)
+	datascale = load(dummy.make_datascale_filename())
+	data,var = zip(*datascale)
+	datascale_dict = dict(zip(var,data))
+
 	try: 
 		out = load(filename)
 		print('loaded data')
@@ -44,9 +50,10 @@ for depth in depth_list:
 		del p_hat_array
 		del out_temp
 		gc.collect(generation=2)
-	if depth>cov_holder.chl_depth_idx:
+	if depth>=cov_holder.chl_depth_idx:
 		var_list.remove('chl')
 	for var,data in zip(var_list,out):
+		data = data*cov_holder.trans_geo.transition_vector_to_plottable(datascale_dict[var] ** 2)
 		try:
 			data_dict[var].append((depth,data))
 		except KeyError:
@@ -68,19 +75,20 @@ fig = plt.figure(figsize=(14,14))
 for kk,var in enumerate(cov_holder.trans_geo.variable_list):
 	ax = fig.add_subplot(5,1,(kk+1))
 	dummy_array = np.zeros([len(data_dict[var]),len(mask_list)])
-	XXX,YYY = np.meshgrid([0,1,2,3,4,5],depths[:len(data_dict[var])])
+	XXX,YYY = np.meshgrid([0,1,2,3,4],depths[:len(data_dict[var])])
 
 	for ii,(depth_idx,data) in enumerate(data_dict[var]):
 		for jj,mask in enumerate(mask_list):
 			dummy_array[ii,jj]=data[mask].mean()
 	pcm = ax.pcolor(XXX,YYY,dummy_array,snap=True)
-	plt.colorbar(pcm,label = colorbar_label[kk])
+	ax.set_yscale('log')
+	plt.colorbar(pcm,label = colorbar_label[kk],pad=.07)
 	ax.annotate(annotate_list[kk], xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 	plt.gca().invert_yaxis()
 	ax.get_xaxis().set_visible(False)
 	ax.set_ylabel('Depth (m)')
 ax.get_xaxis().set_visible(True)
-ax.set_xticks([0,0.5, 1.5, 2.5,3.5,4.5,5])
-ax.set_xticklabels(['']+name_list+[''],rotation = 20)
-plt.subplots_adjust(hspace=0.05)
+ax.set_xticks([0, 1, 2,3,4])
+ax.set_xticklabels(name_list,rotation = 20)
+plt.subplots_adjust(hspace=0.15)
 plt.savefig(plot_handler.out_file('Figure_16'))
