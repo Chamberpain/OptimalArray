@@ -9,6 +9,7 @@ import numpy as np
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 import matplotlib.pyplot as plt
 from OptimalArray.Utilities.CM4Mat import CovCM4
+from OptimalArray.Utilities.CorGeo import InverseGlobal
 
 def make_plot():
 	plt.rcParams['font.size'] = '22'
@@ -29,14 +30,19 @@ def make_plot():
 		for depth_idx in depth_idx_list:
 			if (depth_idx>=cov_holder.chl_depth_idx)&(var=='chl'):
 				continue
+			dummy = InverseGlobal(depth_idx = depth_idx)
+			datascale = load(dummy.make_datascale_filename())
+			data,var1 = zip(*datascale)
+			datascale_dict = dict(zip(var1,data))
+
 			temp_list = []
 			for k in range(16):
 				filename = data_file_handler.tmp_file(str(depth_idx)+'_'+str(k)+'_base')
 				data = load(filename)
 				try:
-					temp_list.append(data[i].mean())
+					temp_list.append((data[i]*datascale_dict[var]).mean())
 				except IndexError:
-					temp_list.append(data[i-1].mean())
+					temp_list.append((data[i-1]*datascale_dict[var]).mean())
 			array_list.append(np.stack(temp_list))
 		data_array = np.stack(array_list)
 		XX,YY = np.meshgrid(time_list,depths[:data_array.shape[0]])
@@ -45,6 +51,7 @@ def make_plot():
 		plt.colorbar(pcm,label = colorbar_label[i])
 		ax.annotate(annotate_list[i], xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 		ax.get_xaxis().set_visible(False)
+		ax.set_yscale('log')
 		ax.set_ylabel('Depth (m)')
 	ax.get_xaxis().set_visible(True)
 	ax.set_xlabel('Time in Future (months)')

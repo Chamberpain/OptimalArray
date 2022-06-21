@@ -240,7 +240,7 @@ class CovArray(object):
 			CovElement(ul,trans_geo=self.trans_geo,row_var=variable_1,col_var=variable_1).save()
 			CovElement(lr,trans_geo=self.trans_geo,row_var=variable_2,col_var=variable_2).save()
 
-	def normalize_data(self,data,lower_percent=0.8,upper_percent = 0.80, scale=1):
+	def normalize_data(self,data,lower_percent=0.85,upper_percent = 0.90, scale=1):
 		mean_removed = data-data.mean(axis=0)
 		# only consider deviations from the mean
 		data_scale = mean_removed.var(axis=0)
@@ -265,7 +265,7 @@ class CovArray(object):
 			greater_mask = data_scale>greater_value # mask will choose everything greater
 		print('greater value is '+str(greater_value))
 		dummy = 0
-		lesser_value = 4*greater_value
+		lesser_value = 15*greater_value
 		lesser_mask = data_scale<lesser_value
 		# while lesser_mask.sum()<upper_percent*len(data_scale): # this used to say "percent*len(data_scale):", but was changed
 		# 	dummy +=1
@@ -280,7 +280,7 @@ class CovArray(object):
 		assert len(data_scale[data_scale == 0]) == 0
 		return_data = mean_removed/np.sqrt(data_scale)
 		assert(len(data_scale[data_scale==0])==0)
-		return (return_data, data_scale) # everything below the 60th percentile will have a standard deviation of 1. The effect of this will be to target high variance regions first
+		return (mean_removed,return_data, data_scale) # everything below the 60th percentile will have a standard deviation of 1. The effect of this will be to target high variance regions first
 
 	def subsample_variable(self,variable_list):
 		assert isinstance(variable_list,VariableList)

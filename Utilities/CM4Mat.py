@@ -43,11 +43,14 @@ class CovCM4(CovArray):
 				holder_list.append(var_temp[:,self.trans_geo.truth_array].data)
 			holder_total_list = np.vstack([x for _,x in sorted(zip(time_list,holder_list))])
 			if variable=='chl':
-				holder_total_list,data_scale = self.normalize_data(holder_total_list,lower_percent=0.8,upper_percent = 0.8)
+				assert (holder_total_list>0).all()
+				holder_total_list = np.log(holder_total_list)
+				mean_removed,holder_total_list,data_scale = self.normalize_data(holder_total_list)
 				print(holder_total_list.var().max())
 			else:
-				holder_total_list,data_scale = self.normalize_data(holder_total_list,lower_percent=0.9,upper_percent = 0.9)				
+				mean_removed,holder_total_list,data_scale = self.normalize_data(holder_total_list)				
 				print(holder_total_list.var().max())
+
 			array_variable_list.append((holder_total_list,variable))
 			data_scale_list.append((data_scale,variable))
 		del holder_total_list

@@ -248,9 +248,9 @@ def make_plots():
 	for i,(scale,var) in enumerate(zip(np.split(cov_holder.cov.diagonal(),len(cov_holder.trans_geo.variable_list)),cov_holder.trans_geo.variable_list)):
 		fig = plt.figure(figsize=(14,14))
 		ax_list = []
-		for k,future_H in enumerate(future_H_list):
+		for k,(jj,future_H) in enumerate(zip([4,12],future_H_list)):
 			print('working on ',k)
-			filename = data_file_handler.tmp_file(str(cov_holder.trans_geo.depth_idx)+'_'+str(k)+'_base')
+			filename = data_file_handler.tmp_file(str(cov_holder.trans_geo.depth_idx)+'_'+str(jj)+'_base')
 			out= load(filename)
 			data = out[i]
 			lat_core,lon_core = future_H.return_pos_of_core().lats_lons()

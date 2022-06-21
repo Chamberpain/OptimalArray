@@ -19,6 +19,7 @@ import numpy as np
 from TransitionMatrix.Utilities.ArgoData import Core,BGC
 from GeneralUtilities.Compute.list import GeoList
 from GeneralUtilities.Plot.Cartopy.regional_plot import RegionalBase
+from OptimalArray.Utilities.CorGeo import InverseNPacific
 
 plt.rcParams['font.size'] = '18'
 
@@ -64,6 +65,11 @@ annotate_list = ['b','c','d','e','f']
 colorbar_label = ['$(^\circ C)^2$','$(PSU)^2$','','$(kg\ m^{-3})^2$','$(mol\ m^{-3})^2$']
 
 for i,depth_idx in enumerate(depth_list):
+	dummy = InverseNPacific(depth_idx = depth_idx)
+	datascale = load(dummy.make_datascale_filename())
+	data,var = zip(*datascale)
+	datascale_dict = dict(zip(var,data))
+
 	for k in range(16):
 		print(i)
 		var_list = cov_holder.trans_geo.variable_list[:]
@@ -78,6 +84,8 @@ for i,depth_idx in enumerate(depth_list):
 		if depth_idx>=cov_holder.chl_depth_idx:
 			var_list.remove('chl')
 		for var,data1,data2 in zip(var_list,out1,out2):
+			data1=data1*datascale_dict[var]
+			data2=data2*datascale_dict[var]
 			try:
 				data_dict[var].append((i,k,np.sum(data1-data2)))
 			except KeyError:
@@ -127,7 +135,7 @@ plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
 
 
 x_offset = 8
-label_offset_list = [(x_offset,0.5),(x_offset,0.5),(x_offset,0.5),(x_offset,0.6),(x_offset,0.5)]
+label_offset_list = [(x_offset,0.5),(x_offset,0.5),(x_offset,0.5),(x_offset,0.6),(x_offset+8,0.5)]
 ax_list = []
 for kk,var in enumerate(cov_holder.trans_geo.variable_list):
 	ax = fig.add_subplot(6,2,(kk+7))
@@ -136,7 +144,7 @@ for kk,var in enumerate(cov_holder.trans_geo.variable_list):
 	depth_idx_list = np.unique(depth_idx_list)
 	timestep_idx_list = np.unique(timestep_idx_list)
 
-	dummy_depths = depths[:len(depth_idx_list)+1]
+	dummy_depths = depths[:len(depth_idx_list)]
 	dummy_times = [3*(x+1) for x in range(len(timestep_idx_list))]
 
 	XX,YY = np.meshgrid(dummy_times,dummy_depths)
@@ -150,6 +158,7 @@ for kk,var in enumerate(cov_holder.trans_geo.variable_list):
 	plt.gca().invert_yaxis()
 	ax.get_xaxis().set_visible(False)
 	ax.set_ylabel('Depth (m)')
+	ax.set_yscale('log')
 	cb = plt.colorbar(pcm)
 	cb.ax.set_ylabel(colorbar_label[kk],rotation=90)
 	cb.ax.yaxis.set_label_coords(label_offset_list[kk][0],label_offset_list[kk][1])
@@ -157,7 +166,7 @@ ax.get_xaxis().set_visible(True)
 ax.set_xlabel('Time in Future (months)')
 ax_list[3].get_xaxis().set_visible(True)
 ax_list[3].set_xlabel('Time in Future (months)')
-plt.subplots_adjust(hspace=0.1)
+plt.subplots_adjust(hspace=0.2)
 plt.subplots_adjust(wspace=.45)
 
 plt.savefig(plot_handler.out_file('Figure_23'))
