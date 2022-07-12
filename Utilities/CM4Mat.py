@@ -8,10 +8,10 @@ import os
 import numpy as np
 import geopy
 import gsw
+from GeneralUtilities.Data.Filepath.instance import get_data_folder
 
 class CovCM4(CovArray):
-	from GeneralUtilities.Data.Download.cm4_download import data_folder
-	data_directory = data_folder
+	data_directory = os.path.join(get_data_folder(),'Processed/CM4/')
 	chl_depth_idx = 10
 	from OptimalArray.__init__ import ROOT_DIR
 	label = 'cm4'
@@ -148,7 +148,7 @@ class CovCM4(CovArray):
 			if file == '.DS_Store':
 				continue
 			filename = os.path.join(CovCM4.data_directory,file)
-			filename = filename[1:]
+			filename = filename
 			var = file.split('_')[0]
 			try:
 				master_dict[var].append(filename)

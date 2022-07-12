@@ -25,7 +25,7 @@ cov_holder = CovCM4Global.load(depth_idx = 2)
 XX,YY = cov_holder.trans_geo.get_coords()
 
 data_dict = {}
-depth_list = [2,4,6,8,10,12,14,16,18,20,22,24]
+depth_list = [2,4,6,8,10,12,14,16,18,20]
 depths = cov_holder.get_depths().data[depth_list,0]
 
 for depth in depth_list:
@@ -51,7 +51,10 @@ for depth in depth_list:
 		del out_temp
 		gc.collect(generation=2)
 	if depth>=cov_holder.chl_depth_idx:
-		var_list.remove('chl')
+		try:
+			var_list.remove('chl')
+		except ValueError:
+			pass
 	for var,data in zip(var_list,out):
 		data = data*cov_holder.trans_geo.transition_vector_to_plottable(datascale_dict[var] ** 2)
 		try:

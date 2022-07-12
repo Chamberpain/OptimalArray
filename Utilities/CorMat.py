@@ -359,6 +359,7 @@ class CovArray(object):
 
 
 	def make_scaling(self,holder):
+#Turns single dimensional matrix into a matrix the size of the full covariance matrix
 		cov_scale = 1
 		total_list = []
 		for k in range(len(self.trans_geo.variable_list)):

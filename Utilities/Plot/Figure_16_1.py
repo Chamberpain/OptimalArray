@@ -25,7 +25,7 @@ cov_holder = CovCM4Global.load(depth_idx = 2)
 XX,YY = cov_holder.trans_geo.get_coords()
 
 data_dict = {}
-depth_list = [2,4,6,8,10,12,14,16,18,20,22,24]
+depth_list = [2,4,6,8,10,12,14,16,18,20]
 depths = cov_holder.get_depths().data[depth_list,0]
 
 for depth in depth_list:

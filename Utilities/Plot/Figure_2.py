@@ -7,13 +7,13 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import cartopy.crs as ccrs
 import numpy as np
-from GeneralUtilities.Data.mapped.modis import MODIS
-from GeneralUtilities.Data.mapped.landschutzer import Landschutzer
-from GeneralUtilities.Data.mapped.roemmich_gilson import RoemmichGilsonSal
-from GeneralUtilities.Data.mapped.cm4 import CM4O2
+from GeneralUtilities.Data.Mapped.modis import MODIS
+from GeneralUtilities.Data.Mapped.landschutzer import Landschutzer
+from GeneralUtilities.Data.Mapped.roemmich_gilson import RoemmichGilsonSal
+from GeneralUtilities.Data.Mapped.cm4 import CM4O2
 
 from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR
-from GeneralUtilities.Filepath.instance import FilePathHandler
+from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 import datetime
 plt.rcParams['font.size'] = '16'
 file_handler = FilePathHandler(ROOT_DIR,'final_figures')
@@ -33,9 +33,9 @@ def get_recent_sensor_pos(sensor,FloatClass=BGCReader):
 
 
 class_list = [MODIS(),CM4O2(),Landschutzer(),RoemmichGilsonSal()]
-data_list = [MODIS().compile_variance(15),CM4O2().compile_variance(15),Landschutzer().compile_variance(15),RoemmichGilsonSal().compile_variance(15)]
-plot_list = [MODIS().compile_monthly_mean_and_variance(15,-40,-20),CM4O2().compile_monthly_mean_and_variance(15,-40,-20)
-			,Landschutzer().compile_monthly_mean_and_variance(15,-40,-20),RoemmichGilsonSal().compile_monthly_mean_and_variance(15,-40,-20)]
+data_list = [MODIS().compile_variance(0),CM4O2().compile_variance(2),Landschutzer().compile_variance(0),RoemmichGilsonSal().compile_variance(0)]
+plot_list = [MODIS().compile_monthly_mean_and_variance(0,-40,-20),CM4O2().compile_monthly_mean_and_variance(2,-40,-20)
+			,Landschutzer().compile_monthly_mean_and_variance(0,-40,-20),RoemmichGilsonSal().compile_monthly_mean_and_variance(0,-40,-20)]
 var_list = ['CHLA','DOXY','PH_IN_SITU_TOTAL','PSAL']
 vmin_list = [np.nanmin(x) for x in data_list]
 vmin_list[0] = 10**(-3)

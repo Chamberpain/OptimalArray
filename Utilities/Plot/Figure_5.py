@@ -4,8 +4,9 @@ from OptimalArray.Utilities.CorMat import CovElement
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy
 from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR
-from GeneralUtilities.Filepath.instance import FilePathHandler
+from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from TransitionMatrix.Utilities.TransGeo import get_cmap
 plt.rcParams['font.size'] = '16'
 file_handler = FilePathHandler(ROOT_DIR,'final_figures')
@@ -19,7 +20,7 @@ dummy = covclass(depth_idx = depth)
 cov_holder_tt = CovElement.load(dummy.trans_geo, "tt", "tt")
 tt_e_vals,tt_e_vecs = np.linalg.eig(cov_holder_tt)
 cov_holder_ph = CovElement.load(dummy.trans_geo, "ph", "ph")
-ss_e_vals,ss_e_vecs = np.linalg.eig(cov_holder_ph)
+ss_e_vals,ss_e_vecs = scipy.sparse.linalg.eigs(cov_holder_ph,k=10)
 
 vmin = -0.025
 vmax = 0.025
@@ -42,7 +43,7 @@ XX,YY = cov_holder_ph.trans_geo.get_coords()
 pcm = ax1.pcolormesh(XX,YY,ss_plot,vmin=vmin,vmax=vmax,cmap='RdYlBu')
 ax1.annotate('b', xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 
-fig.colorbar(pcm,ax=[ax0,ax1],pad=.05,label='Eigenvector Weight',location='top')
+f.colorbar(pcm,ax=[ax0,ax1],pad=.05,label='Eigenvector Weight',location='top')
 
 ax2 = plt.subplot(3,2,5)
 ax2.plot(tt_e_vecs[:72,0])

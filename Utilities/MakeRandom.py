@@ -11,7 +11,7 @@ from GeneralUtilities.Compute.list import VariableList
 from OptimalArray.Utilities.Utilities import make_P_hat,get_index_of_first_eigen_vector
 import os 
 from numpy.random import normal
-
+from OptimalArray.Utilities.ComputeOptimal import CovCM4Optimal
 # plt.rcParams['font.size'] = '16'
 file_handler = FilePathHandler(ROOT_DIR,'final_figures')
 data_file_handler = FilePathHandler(ROOT_DIR,'RandomArray')
@@ -40,8 +40,8 @@ def save_array(cov_holder,H_out,p_hat_out,kk,label):
 def make_random():
 	for depth_idx in [2,4,6,8,10,12,14,16,18,20,22,24]:
 		cov_holder = CovCM4Global.load(depth_idx = depth_idx)
-		for float_num in range(0,501,50):
-			for kk in range(10):
+		for float_num in range(0,1001,50):
+			for kk in range(50):
 				print ('depth = '+str(depth_idx)+', float_num = '+str(float_num)+', kk = '+str(kk))
 				label = 'random_'+str(float_num)
 				filepath = make_filename(label,cov_holder.trans_geo.depth_idx,kk)
@@ -50,9 +50,26 @@ def make_random():
 				save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
 				H_random = HInstance.random_floats(cov_holder.trans_geo, float_num, [1]*len(cov_holder.trans_geo.variable_list))
 				if float_num ==0: 
-					save_array(cov_holder,H_random,cov_holder.cov,kk,label)					
+					save_array(cov_holder,H_random,cov_holder.cov,kk,label)
 				else:
 					p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
 					save_array(cov_holder,H_random,p_hat_random,kk,label)
-					
-make_random()
+
+def make_random_optimal():
+	depth_idx = 0
+	cov_holder = CovCM4Optimal.load()
+	for float_num in range(0,1301,50):
+		for kk in range(50):
+			print ('depth = '+str(depth_idx)+', float_num = '+str(float_num)+', kk = '+str(kk))
+			label = 'random_'+str(float_num)
+			filepath = make_filename(label,cov_holder.trans_geo.depth_idx,kk)
+			if os.path.exists(filepath):
+				continue
+			save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
+			H_random = HInstance.random_floats(cov_holder.trans_geo, float_num, [1]*len(cov_holder.trans_geo.variable_list))
+			if float_num ==0: 
+				save_array(cov_holder,H_random,cov_holder.cov,kk,label)
+			else:
+				p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
+				save_array(cov_holder,H_random,p_hat_random,kk,label)
+				

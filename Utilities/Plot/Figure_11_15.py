@@ -69,20 +69,32 @@ def make_recent_float_H(trans_geo):
 	return H_array
 
 def make_plots():
-	depth = 2
-	cov_holder = CovCM4Global.load(depth_idx = depth)
-	H_array = make_recent_float_H(cov_holder.trans_geo)
 	try:
 		shallow_out,shallow_var = load(data_file_handler.tmp_file('shallow_p_hat'))
 		print('loaded shallow data')
 	except FileNotFoundError:
 		print('could not load shallow data, calculating...')
-		print(H_array.return_H())
+		cov_holder = CovCM4Global.load(depth_idx = 2)
+		H_array = make_recent_float_H(cov_holder.trans_geo)
 		p_hat_array = make_P_hat(cov_holder.cov,H_array,noise_factor=4)
 		surface_out = np.split(p_hat_array.diagonal() / cov_holder.cov.diagonal(),len(cov_holder.trans_geo.variable_list))
 		surface_var = cov_holder.trans_geo.variable_list
-		save(data_file_handler.tmp_file('shallow_p_hat'),(surface_out,surface_var.variable_list))
+		save(data_file_handler.tmp_file('shallow_p_hat'),(surface_out,surface_var))
 		del cov_holder
+		del p_hat_array
+
+	try:
+		mid_out,mid_var = load(data_file_handler.tmp_file('mid_p_hat'))
+		print('loaded mid data')
+	except FileNotFoundError:
+		print('could not load mid data, calculating...')
+		cov_holder = CovCM4Global.load(depth_idx = 8)
+		H_array = make_recent_float_H(cov_holder.trans_geo)
+		p_hat_array = make_P_hat(cov_holder.cov,H_array,noise_factor=4)
+		mid_out = np.split(p_hat_array.diagonal() / cov_holder.cov.diagonal(),len(cov_holder.trans_geo.variable_list))
+		mid_var = cov_holder.trans_geo.variable_list
+		save(data_file_handler.tmp_file('mid_p_hat'),(mid_out,mid_var))
+		# del cov_holder
 		del p_hat_array
 
 	try:
@@ -90,11 +102,8 @@ def make_plots():
 		print('loaded deep data')
 	except FileNotFoundError:
 		print('could not load deep data, calculating...')
-		cov_holder = CovCM4Global.load(depth_idx = 8)
-		H_array = HInstance(trans_geo=cov_holder.trans_geo)
-		for pos,sensor in zip(pos_list,sensor_list):
-			H_array.add_float(Float(pos,sensor))
-		print(H_array.return_H())
+		cov_holder = CovCM4Global.load(depth_idx = 18)
+		H_array = make_recent_float_H(cov_holder.trans_geo)
 		p_hat_array = make_P_hat(cov_holder.cov,H_array,noise_factor=4)
 		deep_out = np.split(p_hat_array.diagonal() / cov_holder.cov.diagonal(),len(cov_holder.trans_geo.variable_list))
 		deep_var = cov_holder.trans_geo.variable_list
@@ -103,29 +112,13 @@ def make_plots():
 		del p_hat_array
 
 
-	try:
-		mid_out,mid_var = load(data_file_handler.tmp_file('mid_p_hat'))
-		print('loaded mid data')
-	except FileNotFoundError:
-		print('could not load mid data, calculating...')
-		cov_holder = CovCM4Global.load(depth_idx = 18)
-		H_array = HInstance(trans_geo=cov_holder.trans_geo)
-		for pos,sensor in zip(pos_list,sensor_list):
-			H_array.add_float(Float(pos,sensor))
-		print(H_array.return_H())
-		p_hat_array = make_P_hat(cov_holder.cov,H_array,noise_factor=4)
-		mid_out = np.split(p_hat_array.diagonal() / cov_holder.cov.diagonal(),len(cov_holder.trans_geo.variable_list))
-		mid_var = cov_holder.trans_geo.variable_list
-		save(data_file_handler.tmp_file('mid_p_hat'),(mid_out,mid_var))
-		# del cov_holder
-		del p_hat_array
-
-
 	label_translation_dict = {'ph':'pH Equipped','chl':'Chlorophyll Equipped','o2':'Oxygen Equipped'}
-	for k,var in enumerate(shallow_var):
+	cov_holder = CovCM4Global.load(depth_idx = 2)
+	H_array = make_recent_float_H(cov_holder.trans_geo)
+	for k,var in enumerate(cov_holder.trans_geo.variable_list):
 		print(var)
 		core_pos = H_array.return_pos_of_core()
-		bgc_pos = H_array.return_pos_of_core()
+		bgc_pos = H_array.return_pos_of_bgc()
 		lat_core,lon_core = core_pos.lats_lons()
 		lat_bgc,lon_bgc = bgc_pos.lats_lons()
 

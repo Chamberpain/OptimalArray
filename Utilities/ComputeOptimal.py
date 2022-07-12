@@ -52,8 +52,7 @@ class OptimalGlobal(InverseGeo):
 
 class CovCM4Optimal(CovArray):
 	trans_geo_class = OptimalGlobal
-	from GeneralUtilities.Data.Download.cm4_download import data_folder
-	data_directory = data_folder
+	data_directory = CovCM4.data_directory
 	from OptimalArray.__init__ import ROOT_DIR
 	label = 'cm4'
 	max_depth_lev = 25  #this corresponds to 2062.5 meters 
@@ -79,7 +78,7 @@ class CovCM4Optimal(CovArray):
 			if file == '.DS_Store':
 				continue
 			filename = os.path.join(CovCM4.data_directory,file)
-			filename = filename[1:]
+			filename = filename
 			var = file.split('_')[0]
 			try:
 				master_dict[var].append(filename)
@@ -89,14 +88,6 @@ class CovCM4Optimal(CovArray):
 
 CovCM4Optimal.dimensions_and_masks = CovCM4.dimensions_and_masks
 
-
-
-
-
-
-
-
-
 def make_optimal():
 	cov_holder = CovCM4Optimal.load()
 	p_hat_ideal = cov_holder.cov[:]
@@ -104,7 +95,7 @@ def make_optimal():
 	kk = 0 
 	save_array(cov_holder,H_ideal,p_hat_ideal,kk,'optimal')
 
-	for kk in range(1,1501):
+	for kk in range(1,1101):
 		try:
 			H_ideal,p_hat_diagonal = load_array(cov_holder,kk,'optimal')
 			p_hat_ideal = None
@@ -121,27 +112,46 @@ def make_optimal():
 			save_array(cov_holder,H_ideal,p_hat_ideal,kk,'optimal')
 
 
-def make_noise_matrix(cov_holder,SNR):
-	print('makeing the SNR matrix ...')
-	print('SNR = ',SNR)
-	l=cov_holder.trans_geo.l*2
-	scale = cov_holder.calculate_scaling(l=l)
-	holder = cov_holder.dist
-	gaussian = np.exp(-holder**2/(4*l)) # 4l because we will square this value and it will become 2l
-	full_gaussian = cov_holder.make_scaling(gaussian)
-	scaling_list = (np.sqrt(cov_holder.cov.diagonal()/SNR)).tolist()
-	row_idxs,col_idxs,data = scipy.sparse.find(full_gaussian)
-	for k in range(len(scaling_list)):
-		data[k] = normal(scale=data[k]*scaling_list[col_idxs[k]])
-	noise_matrix = scipy.sparse.csc_matrix((data,(row_idxs,col_idxs)),shape = cov_holder.cov.shape)
-	noise_matrix = noise_matrix.dot(noise_matrix.T)
-	# evals,evecs = scipy.sparse.linalg.eigs(noise_matrix, 1, sigma=-1)
-	# assert evals[0]>=-10**-10
-	return noise_matrix
+
+def make_total_noise_matrix(SNR):
+
+
+	def make_noise_matrix(cov_holder,SNR):
+		print('makeing the SNR matrix ...')
+		print('SNR = ',SNR)
+		l=cov_holder.trans_geo.l*2
+		gaussian = np.exp(-cov_holder.dist**2/(4*l)) # 4l because we will square this value and it will become 2l
+		full_gaussian = cov_holder.make_scaling(gaussian)
+		data_list = full_gaussian[cov_holder.cov!=0].tolist()[0]
+		row_idx,column_idx,dummy = scipy.sparse.find(cov_holder.cov)
+		scaling_list = (np.sqrt(cov_holder.cov.diagonal()/SNR)).tolist()
+
+		data = full_gaussian[cov_holder.cov!=0].tolist()[0]
+		row_idx,col_idx,dummy = scipy.sparse.find(cov_holder.cov)
+		scale_list = []
+		for k,col in enumerate(col_idx):
+			data[k] = normal(scale=abs(data[k])*scaling_list[col])
+		noise_matrix = scipy.sparse.csc_matrix((data,(row_idx,col_idx)),shape = cov_holder.cov.shape)
+		noise_matrix = noise_matrix*(noise_matrix.T)
+		# evals,evecs = scipy.sparse.linalg.eigs(noise_matrix, 1, sigma=-1)
+		# assert evals[0]>=-10**-10
+		return noise_matrix
+
+	cov_2 = CovCM4GlobalSubsample.load(2)
+	cov_2 = make_noise_matrix(cov_2,SNR)
+	cov_6 = CovCM4GlobalSubsample.load(6)
+	cov_6 = make_noise_matrix(cov_6,SNR)
+	cov_14 = CovCM4GlobalSubsample.load(14)
+	cov_14 = make_noise_matrix(cov_14,SNR)
+	cov_18 = CovCM4GlobalSubsample.load(18)
+	cov_18 = make_noise_matrix(cov_18,SNR)
+
+	return InverseInstance(scipy.sparse.block_diag((cov_2,cov_6,cov_14,cov_18)))
+
+
 
 def make_SNR():
-	depth_idx = 2
-	cov_holder = CovCM4Global.load(depth_idx = depth_idx)
+	cov_holder = CovCM4Optimal.load()
 	for SNR in [10000,5000,1000,500,100,50,10,5,1,0.5,0.1,0.05,0.01]:
 		for kk in range(10):
 			print ('SNR = '+str(SNR)+', kk = '+str(kk))
@@ -151,9 +161,9 @@ def make_SNR():
 			if os.path.exists(filepath):
 				continue
 			print('SNR is ',SNR)
-			H_ideal,p_hat_diagonal = load_array(cov_holder,100,'optimal')
-			H_random = HInstance.random_floats(cov_holder.trans_geo, 100, [1]*len(cov_holder.trans_geo.variable_list))
-			cov_snr = make_noise_matrix(cov_holder,SNR)
+			H_ideal,p_hat_diagonal = load_array(cov_holder,1000,'optimal')
+			H_random = HInstance.random_floats(cov_holder.trans_geo, 1000, [1]*len(cov_holder.trans_geo.variable_list))
+			cov_snr = make_total_noise_matrix(SNR)
 			cov_out = cov_holder.cov + cov_snr
 			p_hat_ideal = make_P_hat(cov_out,H_ideal,noise_factor=4)
 			p_hat_random = make_P_hat(cov_out,H_random,noise_factor=4)

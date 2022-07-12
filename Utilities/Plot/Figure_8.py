@@ -47,17 +47,17 @@ def float_plot(filename,zorder,color):
 	float_lats,float_lons = pos_list.lats_lons()
 	ax1.scatter(float_lons,float_lats,zorder=zorder,color=color,label=str(number)+' Floats')
 	domain_lats,domain_lons = cov_holder.trans_geo.total_list.lats_lons()
-	domain_counts, bins = np.histogram(domain_lats,bins=np.arange(-90,91,6))
+	domain_counts, bins = np.histogram(domain_lats,bins=np.arange(-90,91,4))
 	domain_counts[domain_counts == 0] = 1
-	float_counts, bins = np.histogram(float_lats,bins=np.arange(-90,91,6))
+	float_counts, bins = np.histogram(float_lats,bins=np.arange(-90,91,4))
 	ax2.hist(bins[:-1], bins, weights=float_counts/domain_counts,orientation="horizontal",zorder=zorder,color=color)
 	ax2.set_yticks([-60,-30,0,30,60])
 	ax2.set_yticklabels(['$60^\circ S$','$30^\circ S$','$0^\circ$','$30^\circ N$','$60^\circ N$'])
 	ax2.set_ylim([-90,90])
 	ax2.set_xlabel('Floats/Grid Cell')
-	domain_counts, bins = np.histogram(domain_lons,bins=np.arange(-180,181,6))
+	domain_counts, bins = np.histogram(domain_lons,bins=np.arange(-180,181,4))
 	domain_counts[domain_counts == 0] = 1
-	float_counts, bins = np.histogram(float_lons,bins=np.arange(-180,181,6))
+	float_counts, bins = np.histogram(float_lons,bins=np.arange(-180,181,4))
 	ax3.hist(bins[:-1], bins, weights=float_counts/domain_counts,zorder=zorder,color=color)
 	ax3.set_xlim([-180,180])
 	ax3.set_xticks([-180,-120,-60,0,60,120,180])
@@ -75,3 +75,28 @@ for k,(filename,zorder) in enumerate([(filenames[1000],16),(filenames[900],17),(
 ax1.legend(bbox_to_anchor=(0.55, 1.25), loc='upper center',ncol=5,columnspacing = 0.01,handletextpad=0.1,labelspacing = 0.01)
 plt.savefig(plot_file_handler.out_file('Figure_8'))
 plt.close()
+
+
+def make_movie():
+	float_array,p_hat = load(filenames[0])
+	base_cov = cov_holder.trans_geo.transition_vector_to_plottable(p_hat)
+	plot_file_handler = FilePathHandler(PLOT_DIR,'optimal_array')
+	for k,floatnum in enumerate(np.arange(0,1001,10)):
+		fig = plt.figure(figsize=(14,8))
+		ax1 = fig.add_subplot(projection=ccrs.PlateCarree())
+		plot_holder = GlobalCartopy(ax=ax1,adjustable=True)
+		XX,YY,ax1 = plot_holder.get_map()
+		XX,YY = cov_holder.trans_geo.get_coords()
+		file_ = filenames[floatnum]
+		float_array,p_hat = load(file_)
+		pos_list = GeoList([cov_holder.trans_geo.total_list[x] for x in float_array])
+		try:
+			float_lats,float_lons = pos_list.lats_lons()
+		except ValueError:
+			float_lats = []
+			float_lons = []
+		pcm = ax1.pcolor(XX,YY,cov_holder.trans_geo.transition_vector_to_plottable(p_hat)/base_cov,vmin=0,vmax=1)
+		fig.colorbar(pcm,ax=[ax1],label='Formal Mapping Error')
+		ax1.scatter(float_lons,float_lats,s=70,c='r')
+		plt.savefig(plot_file_handler.tmp_file(str(k)))
+		plt.close()
