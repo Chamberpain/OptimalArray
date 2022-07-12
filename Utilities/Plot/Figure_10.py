@@ -89,8 +89,8 @@ for depth_idx in unique_depth_list:
 x_offset = 7
 label_offset_list = [(x_offset+3,0.5),(x_offset,0.5),(x_offset,0.5),(x_offset,0.6),(x_offset+6,0.5)]
 
-fig = plt.figure(figsize=(18,14))
-gs = GridSpec(8, 2, width_ratios=[7, 1], height_ratios = [0.1,0.8,0.8,0.8,0.8,0.8,0.2,2]) 
+fig = plt.figure(figsize=(14,14))
+gs = GridSpec(8, 2, width_ratios=[7, 2], height_ratios = [0.1,0.8,0.8,0.8,0.8,0.8,0.5,2]) 
 ax_list = [fig.add_subplot(gs[ii]) for ii in [0]+list(range(2,12))]
 
 
@@ -139,7 +139,7 @@ ax_list[9].set_xlabel('Deployed Floats',zorder=50)
 deep_list = []
 shallow_list = []
 
-gs = GridSpec(8, 2, width_ratios=[1, 1], height_ratios = [0.1,0.8,0.8,0.8,0.8,0.8,0.2,2]) 
+gs = GridSpec(8, 2, width_ratios=[1, 1], height_ratios = [0.1,0.8,0.8,0.8,0.8,0.8,0.3,2]) 
 ax = fig.add_subplot(gs[14])
 for var in var_dict:
 	data = var_dict[var]
@@ -148,12 +148,10 @@ for var in var_dict:
 	if var != 'chl':
 		deep_list.append(data[4:,:].mean(axis=0))
 ax.set_ylim([0.7,1.05])
-ax.legend(ncol=3,loc='upper right',fancybox=True)
-ax.annotate(annotate_list[10], xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
+ax.legend(ncol=3,bbox_to_anchor=(1, 1.2),fancybox=True)
+ax.annotate(annotate_list[10], xy = (0.1,0.1),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 ax.set_xlabel('Deployed Floats',zorder=50)
 ax.set_ylabel('Mapping Error',zorder=50)
-
-print('pH decreased ',(var_dict['so'].mean(axis=0)[-1]-var_dict['ph'].mean(axis=0)[-1])/var_dict['so'].mean(axis=0)[-1],' percent faster than salinity')
 
 shallow_stacked = np.vstack(shallow_list)
 deep_stacked = np.vstack(deep_list)
@@ -168,9 +166,6 @@ ax.set_ylim([0.7,1.05])
 ax.axes.yaxis.set_visible(False)
 ax.annotate(annotate_list[11], xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 ax.set_xlabel('Deployed Floats',zorder=50)
-
-print('Upper ocean decreased ',(deep_stacked.mean(axis=0)[-1]-shallow_stacked.mean(axis=0)[-1])/deep_stacked.mean(axis=0)[-1],' percent faster than the deep')
-
 
 plt.subplots_adjust(wspace=0)
 plt.savefig(plot_handler.out_file('Figure_10'))
