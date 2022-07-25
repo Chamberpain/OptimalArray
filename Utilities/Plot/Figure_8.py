@@ -64,7 +64,7 @@ def float_plot(filename,zorder,color):
 	ax3.set_xticklabels(['$180^\circ$','$120^\circ W$','$60^\circ W$','$0^\circ$','$60^\circ E$','$120^\circ E$','$180^\circ$'])
 	ax3.set_xlabel('Floats/Grid Cell')
 
-cmap = matplotlib.cm.get_cmap('plasma')
+cmap = matplotlib.cm.get_cmap('plasma_r')
 # for k,(filename,zorder) in enumerate([(filenames[800],17),(filenames[700],18),(filenames[600],19),(filenames[500],20),(filenames[400],21),(filenames[300],22),(filenames[200],23),(filenames[100],24)]):
 for k,(filename,zorder) in enumerate([(filenames[1000],16),(filenames[900],17),(filenames[800],17),(filenames[700],18),(filenames[600],19),(filenames[500],20),(filenames[400],21),(filenames[300],22),(filenames[200],23),(filenames[100],24)]):
 
