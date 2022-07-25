@@ -70,7 +70,7 @@ tropics_mask= (YY>-20)&(YY<=20)
 N_midlatitudes_mask = (YY>20)&(YY<=60)
 arctic_mask = YY>60
 mask_list = [antarctic_mask,S_midlatitudes_mask,tropics_mask,N_midlatitudes_mask,arctic_mask]
-name_list = ['Southern Ocean','South Midlatitudes','Tropics','North Midlatitudes','Artic']
+name_list = ['Southern Ocean','South Midlatitudes','Tropics','North Midlatitudes','Arctic']
 units_list = CovCM4.get_units(cov_holder)
 colorbar_label = ['$(^\circ C)^2$','$(PSU)^2$','','$(kg\ m^{-3})^2$','$(mol\ m^{-3})^2$']
 annotate_list = ['a','b','c','d','e']
