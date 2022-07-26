@@ -13,6 +13,11 @@ from GeneralUtilities.Plot.Cartopy.eulerian_plot import GlobalCartopy
 from TransitionMatrix.Utilities.TransGeo import get_cmap
 from netCDF4 import Dataset
 import numpy as np
+from GeneralUtilities.Data.Filepath.instance import FilePathHandler
+from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR as PLOT_DIR
+
+plot_handler = FilePathHandler(PLOT_DIR,'final_figures')
+
 
 for covclass in [CovCM4GlobalSubsample]:
 	# for depth in [8,26]:
@@ -57,12 +62,17 @@ for covclass in [CovCM4GlobalSubsample]:
 
 cov_holder = CovCM4Global.load(depth_idx = 2)
 
-fig,axs = plt.subplots(5, 2,figsize=(14,14))
+fig,axs = plt.subplots(5, 2,figsize=(10,10))
 for mr,tl,var,depth in zip(mean_removed_list,scaled_data_list,variable_list,depth_list):
 	idx = cov_holder.trans_geo.variable_list.index(var)
 	axs[idx,0].plot(sorted(mr),label=(str(depth)+' m'))
 	axs[idx,1].plot(sorted(tl))
+	axs[idx,0].get_xaxis().set_visible(False)
+	axs[idx,1].get_xaxis().set_visible(False)
 
+for col_idx in [0,1]:
+	axs[4,col_idx].get_xaxis().set_visible(True)
+	axs[4,col_idx].set_xlabel('Dataset Index')
 
 for k,ylab in enumerate(['$(^\circ C)^2$','$(PSU)^2$','','$(kg\ m^{-3})^2$','$(mol\ m^{-3})^2$']):
 	axs[k,0].set_ylabel(ylab)
@@ -74,3 +84,11 @@ for k,an in enumerate(['a','b','c','d','e','f','g','h','i','j']):
 axs[0,0].legend(bbox_to_anchor=(1, 1.4), loc='upper center',ncol=4)
 plt.savefig(plot_handler.out_file('Sup_3'))	
 plt.close()
+
+
+percent_top = []
+for tl in scaled_data_list:
+	val = (abs((sorted(tl)-sorted(tl)[-1]))<10**-2).sum()/len(tl)
+	percent_top.append(val)
+	print(val)
+print(np.mean(percent_top))
