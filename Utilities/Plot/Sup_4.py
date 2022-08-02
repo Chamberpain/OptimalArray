@@ -29,7 +29,7 @@ for covclass in [CovCM4GlobalSubsample]:
 	depth_list = []
 	cov_holder = CovCM4GlobalSubsample.load(depth_idx = 2)
 
-	black_sea_idx = cov_holder.trans_geo.total_list.index(geopy.Point(42, 32))
+	black_sea_idx = cov_holder.trans_geo.total_list.index(geopy.Point(30, 164))
 	western_trop_pac_idx = cov_holder.trans_geo.total_list.index(geopy.Point(2, 144))
 
 	for depth in [2,6,14,18]:
@@ -60,8 +60,10 @@ for covclass in [CovCM4GlobalSubsample]:
 
 
 fig,axs = plt.subplots(5, 2,figsize=(14,14))
-v_list = [8,1.6,0.7,2*10**(-6),0.09]
+v_list = [3,.5,0.05,5*10**(-7),0.01]
 for bs,wtp,var,depth in zip(black_sea,western_trop_pac,variable_list,depth_list):
+	if depth ==15:
+		continue
 	v = v_list[cov_holder.trans_geo.variable_list.index(var)]
 	idx = cov_holder.trans_geo.variable_list.index(var)
 	axs[idx,0].plot(bs-bs.mean(),label=(str(depth)+' m'))
@@ -81,5 +83,5 @@ for k,an in enumerate(['a','b','c','d','e','f','g','h','i','j']):
 
 axs[0,0].legend(bbox_to_anchor=(1, 1.6), loc='upper center',ncol=4)
 plt.subplots_adjust(hspace=.45)
-plt.savefig(plot_handler.out_file('Sup_4'))	
+plt.savefig(plot_handler.out_file('lynne_plot'))	
 plt.close()

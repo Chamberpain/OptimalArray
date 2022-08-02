@@ -77,11 +77,9 @@ for ax,data_class,data,(mean,std),variable,vmin,anno in zip(ax_list,class_list,d
 ax5.legend()
 ax5.set_ylabel('Scaled Signal')
 ax5.set_xlabel('Month')
-ax5.annotate('f', xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
+ax5.set_xticklabels(['Jan','Mar','May','Jul','Sep','Nov'],rotation = 20)
+ax5.set_xlim([0,11])
+ax5.annotate('e', xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 
 plt.savefig(file_handler.out_file('Figure_2'),bbox_inches='tight')
 plt.close()
-
-
-
-

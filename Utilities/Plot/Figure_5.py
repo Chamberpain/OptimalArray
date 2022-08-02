@@ -59,3 +59,6 @@ ax2.get_shared_y_axes().join(ax2, ax3)
 ax3.annotate('d', xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 plt.savefig(file_handler.out_file('Figure_5'),bbox_inches='tight')
 plt.close()
+
+print('gravest mode explains ',tt_e_vals[1]/np.sum(tt_e_vals)*100,' % of the variance')
+print('7th mode explains ',tt_e_vals[7]/np.sum(tt_e_vals)*100,' % of the variance')
