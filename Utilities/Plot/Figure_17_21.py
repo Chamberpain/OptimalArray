@@ -134,7 +134,7 @@ def make_movie_base(cov_holder,future_H_list,label):
 				ax0.scatter(lon_var,lat_var,c='black',s=BGC.marker_size,zorder=12,label = label_translation_dict[var],transform=ccrs.PlateCarree())
 			plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
                       ncol=3, mode="expand", borderaxespad=0.)
-			fig.colorbar(pcm,pad=-0.05,label='Scaled Unconstrained Variance',location='bottom')
+			fig.colorbar(pcm,pad=-0.05,label='Mapping Error',location='bottom')
 			make_folder_if_does_not_exist(plot_handler.tmp_file(var))
 			plt.savefig(plot_handler.tmp_file(var+'/'+str(k)),bbox_inches='tight')
 			plt.close()

@@ -125,7 +125,7 @@ ax0.plot(x,y,c=float_2_col,linewidth=linewidth_increase,zorder=11,transform=ccrs
 ax0.scatter(x[0],y[0],c=float_2_col,s=BGC.marker_size+marker_increase,zorder=11,transform=ccrs.PlateCarree())
 ax0.scatter(x[-1],y[-1],c=float_2_col,s=BGC.marker_size+marker_increase,marker='*',zorder=11,label = 'Float 2',transform=ccrs.PlateCarree())
 cbar = fig.colorbar(pcm, orientation="horizontal", pad=0.14)
-cbar.ax.set_xlabel('Scaled Unconstrained Variance')
+cbar.ax.set_xlabel('Mapping Error')
 cbar.ax.xaxis.set_label_coords(0.5,1.6)
 ax0.annotate('a', xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 

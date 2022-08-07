@@ -95,8 +95,8 @@ def make_movie():
 		except ValueError:
 			float_lats = []
 			float_lons = []
-		pcm = ax1.pcolor(XX,YY,cov_holder.trans_geo.transition_vector_to_plottable(p_hat)/base_cov,vmin=0,vmax=1)
-		fig.colorbar(pcm,ax=[ax1],label='Formal Mapping Error')
-		ax1.scatter(float_lons,float_lats,s=70,c='r')
+		pcm = ax1.pcolor(XX,YY,cov_holder.trans_geo.transition_vector_to_plottable(p_hat)/base_cov,cmap='YlOrBr',vmin=0,vmax=1)
+		fig.colorbar(pcm,ax=[ax1],label='Mapping Error',location='right',fraction=0.032, pad=0.04)
+		ax1.scatter(float_lons,float_lats,s=70,c='b')
 		plt.savefig(plot_file_handler.tmp_file(str(k)))
 		plt.close()

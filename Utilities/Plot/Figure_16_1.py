@@ -85,7 +85,7 @@ for kk,var in enumerate(cov_holder.trans_geo.variable_list):
 			dummy_array[ii,jj]=data[mask].mean()
 	pcm = ax.pcolor(XXX,YYY,dummy_array,snap=True,cmap='YlOrBr',vmin=0,vmax=1)
 	ax.set_yscale('log')
-	plt.colorbar(pcm,label = colorbar_label[kk],pad=.07)
+	plt.colorbar(pcm,label = 'Mapping Error',pad=.07)
 	ax.annotate(annotate_list[kk], xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 	plt.gca().invert_yaxis()
 	ax.get_xaxis().set_visible(False)
