@@ -1,7 +1,7 @@
 from GeneralUtilities.Compute.list import GeoList,VariableList
 from TransitionMatrix.Utilities.TransGeo import GeoBase
 from OptimalArray.Utilities.__init__ import ROOT_DIR
-from OptimalArray.Data.__init__ import ROOT_DIR as DATA_DIR
+from GeneralUtilities.Data.Filepath.instance import get_data_folder 
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from GeneralUtilities.Plot.Cartopy.regional_plot import SOSECartopy,GOMCartopy,CCSCartopy,NAtlanticCartopy
 from GeneralUtilities.Plot.Cartopy.eulerian_plot import GlobalCartopy
@@ -11,6 +11,7 @@ import numpy as np
 import copy
 import matplotlib.pyplot as plt
 
+DATA_DIR = get_data_folder()
 unit_dict = {'salt':'psu','temp':'C','dic':'mol m$^{-2}$','o2':'mol m$^{-2}$'}
 variable_translation_dict = {'thetao':'TEMP','so':'PSAL','ph':'PH_IN_SITU_TOTAL','chl':'CHLA','o2':'DOXY'}
 

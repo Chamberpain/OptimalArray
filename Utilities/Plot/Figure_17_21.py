@@ -131,7 +131,7 @@ def make_movie_base(cov_holder,future_H_list,label):
 			if var in ['ph','chl','o2']:
 				var_pos = future_H.return_pos_of_variable(var)
 				lat_var,lon_var = var_pos.lats_lons()
-				ax0.scatter(lon_var,lat_var,c='black',s=BGC.marker_size,zorder=12,label = label_translation_dict[var],transform=ccrs.PlateCarree())
+				ax0.scatter(lon_var,lat_var,c='cyan',s=BGC.marker_size,zorder=12,label = label_translation_dict[var],transform=ccrs.PlateCarree())
 			plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
                       ncol=3, mode="expand", borderaxespad=0.)
 			fig.colorbar(pcm,pad=-0.05,label='Mapping Error',location='bottom')
@@ -179,7 +179,7 @@ def make_movie_float(cov_holder,future_H_list,label,nn):
 			ax0.scatter(lon_bgc,lat_bgc,c='blue',s=BGC.marker_size,zorder=11,label = 'BGC',transform=ccrs.PlateCarree())
 			float_pos = GeoList([x.pos for x in future_H._list_of_floats[nn:]])
 			lat_floats,lon_floats = float_pos.lats_lons()
-			ax0.scatter(lon_floats,lat_floats,c='black',s=BGC.marker_size,zorder=12,label = 'Hypothetical Floats',transform=ccrs.PlateCarree())
+			ax0.scatter(lon_floats,lat_floats,c='cyan',s=BGC.marker_size,zorder=12,label = 'Hypothetical Floats',transform=ccrs.PlateCarree())
 			plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
                       ncol=3, mode="expand", borderaxespad=0.)
 			fig.colorbar(pcm,label='Scaled Unconstrained Variance',location='bottom')
@@ -268,7 +268,7 @@ def make_plots():
 			if var in ['ph','chl','o2']:
 				var_pos = future_H.return_pos_of_variable(var)
 				lat_var,lon_var = var_pos.lats_lons()
-				ax0.scatter(lon_var,lat_var,c='black',s=BGC.marker_size,zorder=12,label = label_translation_dict[var],transform=ccrs.PlateCarree())
+				ax0.scatter(lon_var,lat_var,c='cyan',s=BGC.marker_size,zorder=12,label = label_translation_dict[var],transform=ccrs.PlateCarree())
 			ax0.annotate(annotate_list[k], xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 		plt.legend(ncol=3,bbox_to_anchor=(.0, 1.0, .0, 1.0), loc=3)
 		fig.colorbar(pcm,ax=ax_list,pad=.05,label='Scaled Unconstrained Variance',location='right')

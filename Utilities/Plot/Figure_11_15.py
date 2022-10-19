@@ -137,7 +137,7 @@ def make_plots():
 		if var in ['ph','chl','o2']:
 			var_pos = H_array.return_pos_of_variable(var)
 			lat_var,lon_var = var_pos.lats_lons()
-			ax0.scatter(lon_var,lat_var,c='black',s=BGC.marker_size,zorder=11,label = label_translation_dict[var])
+			ax0.scatter(lon_var,lat_var,c='cyan',s=BGC.marker_size,zorder=11,label = label_translation_dict[var])
 		ax0.annotate('a', xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 
 
@@ -159,7 +159,7 @@ def make_plots():
 		if var in ['ph','chl','o2']:
 			var_pos = H_array.return_pos_of_variable(var)
 			lat_var,lon_var = var_pos.lats_lons()
-			ax1.scatter(lon_var,lat_var,c='black',s=BGC.marker_size,zorder=11,label = label_translation_dict[var])
+			ax1.scatter(lon_var,lat_var,c='cyan',s=BGC.marker_size,zorder=11,label = label_translation_dict[var])
 		ax1.annotate('b', xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 		fig.colorbar(pcm,ax=[ax0,ax1],pad=.05,label='Mapping Error',location='right')
 		plt.legend(ncol=3,bbox_to_anchor=(.3, 1.02, .3, 1.02), loc=3)

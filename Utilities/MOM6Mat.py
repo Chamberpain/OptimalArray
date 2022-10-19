@@ -1,4 +1,5 @@
-from OptimalArray.Utilities.CorGeo import InverseGlobal,InverseIndian,InverseSO,InverseNAtlantic,InverseTropicalAtlantic,InverseSAtlantic,InverseNPacific,InverseTropicalPacific,InverseSPacific,InverseGOM,InverseCCS
+from OptimalArray.Utilities.CorGeo import InverseGeo
+from GeneralUtilities.Plot.Cartopy.eulerian_plot import GlobalCartopy
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from OptimalArray.Utilities.CorMat import CovArray,InverseInstance
 from GeneralUtilities.Compute.list import GeoList, VariableList
@@ -6,11 +7,38 @@ from netCDF4 import Dataset
 import os
 import numpy as np
 import geopy
+from GeneralUtilities.Data.Filepath.instance import get_data_folder
+from GeneralUtilities.Compute.list import find_nearest,flat_list,LonList,LatList
+import datetime
+import gc
 
+class InverseCristina(InverseGeo):
+	facecolor = 'salmon'
+	facename = 'California Current'
+	plot_class = GlobalCartopy
+	region = 'ccs'
+	lat_sep=.5
+	lon_sep=.5
+	l=1
+	coord_list = [(-130.4035261964233,55),(-135.07,55),(-135.07,19.90),
+	(-104.6431889409656,19.90),(-105.4266560754428,23.05901404803846),(-113.2985172073168,31.65136326179817),
+	(-117.3894585799435,32.49679570904591),(-121.8138182188833,35.72586240471471),(-123.4646493631059,38.58314108287027),
+	(-123.9821609070654,42.58507262179968),(-123.5031152865783,47.69525998053675),(-127.0812674058722,49.62755804643379),
+	(-130.4035261964233,55)]
+
+	def get_lat_bins(self):
+		nc_fid = Dataset(self.get_dummy_file())
+		return LatList(nc_fid['lat'][:][::2,0])
+
+	def get_lon_bins(self):
+		nc_fid = Dataset(self.get_dummy_file())
+		return LonList(nc_fid['lon'][:][0,::2])
+
+	def get_dummy_file(self):
+		return os.path.join(get_data_folder(),'Processed/mom6/MOM6_CCS_bgc_phys_2008_01.nc')
 
 class CovMOM6(CovArray):
-	from OptimalArray.Data.__init__ import ROOT_DIR as DATA_DIR
-	data_directory = DATA_DIR + '/mom6'
+	data_directory = os.path.join(get_data_folder(),'Processed/mom6/')
 	chl_depth_idx = 10
 	from OptimalArray.__init__ import ROOT_DIR
 	label = 'mom6'
@@ -25,37 +53,48 @@ class CovMOM6(CovArray):
 
 
 	def stack_data(self):
-		master_list = self.get_filenames()
-		dh = Dataset(master_list[0])
 		array_variable_list = []
-		for var in self.variable_list:
+		data_scale_list = []
+		for var in self.trans_geo.variable_list:
+			time_list = []
+			holder_list = []
 			if (self.trans_geo.depth_idx>self.chl_depth_idx)&(var=='chl'):
 				continue
-			var_temp = dh[var][:,self.trans_geo.depth_idx,:,:]
-			holder_total_list = var_temp[:,self.trans_geo.truth_array].data
-			holder_total_list = self.normalize_data(holder_total_list,self.label+'_'+var,plot=False)
+			for file_ in self.get_filenames():
+				dh = Dataset(file_)
+				time_holder = [datetime.date(int(x),int(y),int(z)) for x,y,z in zip(dh['year'][:].tolist(),dh['month'][:].tolist(),dh['day'][:].tolist())]
+				time_list.append(time_holder)
+				var_temp = dh[var][:,self.trans_geo.depth_idx,::2,::2]
+				holder_list.append(var_temp[:,self.trans_geo.truth_array].data)
+			holder_total_list = np.vstack([x for _,x in sorted(zip(time_list,holder_list))])
+			if var=='chl':
+				assert (holder_total_list>0).all()
+				holder_total_list = np.log(holder_total_list)
+				mean_removed,holder_total_list,data_scale = self.normalize_data(holder_total_list)
+				print(holder_total_list.var().max())
+			else:
+				mean_removed,holder_total_list,data_scale = self.normalize_data(holder_total_list)				
+				print(holder_total_list.var().max())
 			array_variable_list.append((holder_total_list,var))
+			data_scale_list.append((data_scale,var))
 		del holder_total_list
+		del holder_list
 		del var_temp
 		return array_variable_list
 
 	def dimensions_and_masks(self):
 		file = self.get_filenames()[0]
 		dh = Dataset(file)
-		temp = dh['so'][:,self.max_depth_lev,:,:]
-		temp = np.ma.masked_greater(temp,40)
-		depth_mask = ~temp.mask[0] # no need to grab values deepeer than 2000 meters
-		X = dh['lon'][:]
-		Y = dh['lat'][:]
-		X_subsample_mask = (abs((X%self.trans_geo.lon_sep))<=0.0625)|(abs(X%self.trans_geo.lon_sep)>(self.trans_geo.lon_sep-0.0625))
-		Y_subsample_mask = (abs((Y%self.trans_geo.lat_sep))<=0.0625)|(abs(Y%self.trans_geo.lat_sep)>(self.trans_geo.lat_sep-0.0625))
-		subsample_mask = X_subsample_mask&Y_subsample_mask
+		temp = dh['so'][:,self.max_depth_lev,::2,::2]
+		depth_mask = ~temp.mask[0] # no need to grab values deeper than 2000 meters
+		X = dh['lon'][:][::2,::2]
+		Y = dh['lat'][:][::2,::2]
 		geolist = GeoList([geopy.Point(x) for x in list(zip(Y.ravel(),X.ravel()))],lat_sep=self.trans_geo.lat_sep,lon_sep=self.trans_geo.lon_sep)
 		oceans_list = []
 		for k,dummy in enumerate(geolist.to_shapely()):
 			print(k)
 			oceans_list.append(self.trans_geo.ocean_shape.contains(dummy))	# only choose coordinates within the ocean basin of interest
-		total_mask = (depth_mask)&(subsample_mask)&(np.array(oceans_list).reshape(X.shape))
+		total_mask = (depth_mask)&(np.array(oceans_list).reshape(X.shape))
 
 		lat_list = self.trans_geo.get_lat_bins()
 		lon_list = self.trans_geo.get_lon_bins()
@@ -74,7 +113,7 @@ class CovMOM6(CovArray):
 
 	@staticmethod
 	def get_filenames():
-		return [os.path.join(CovMOM6.data_directory, "MOM6_CCS_cov_20_25N_135-123W.nc")[1:]]
+		return [os.path.join(CovMOM6.data_directory,x) for x in os.listdir(CovMOM6.data_directory)]
 
 	@classmethod
 	def load(cls,depth_idx):
@@ -86,57 +125,30 @@ class CovMOM6(CovArray):
 		holder.cov = global_cov+submeso_cov
 		return holder
 
-class CovMOM6Global(CovMOM6):
-	trans_geo_class = InverseGlobal
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
-class CovMOM6Indian(CovMOM6):
-	trans_geo_class = InverseIndian
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
-class CovMOM6SO(CovMOM6):
-	trans_geo_class = InverseSO
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
-class CovMOM6NAtlantic(CovMOM6):
-	trans_geo_class = InverseNAtlantic
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
-class CovMOM6TropicalAtlantic(CovMOM6):
-	trans_geo_class = InverseTropicalAtlantic
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
-class CovMOM6SAtlantic(CovMOM6):
-	trans_geo_class = InverseSAtlantic
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
-class CovMOM6NPacific(CovMOM6):
-	trans_geo_class = InverseNPacific
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
-class CovMOM6TropicalPacific(CovMOM6):
-	trans_geo_class = InverseTropicalPacific
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
-class CovMOM6SPacific(CovMOM6):
-	trans_geo_class = InverseSPacific
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
-class CovMOM6GOM(CovMOM6):
-	trans_geo_class = InverseGOM
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
 class CovMOM6CCS(CovMOM6):
-	trans_geo_class = InverseCCS
+	trans_geo_class = InverseCristina
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
+
+
+def calculate_cov():
+	for covclass in [CovMOM6CCS]:
+		# for depth in [8,26]:
+		for depth in range(24):
+			print('depth idx is '+str(depth))
+			dummy = covclass(depth_idx = depth)
+			if os.path.isfile(dummy.trans_geo.make_inverse_filename()):
+				continue
+			try:
+				# dummy.stack_data()
+				dummy.calculate_cov()
+				dummy.scale_cov()
+			except FileNotFoundError:
+				# dummy.stack_data()
+				dummy.calculate_cov()
+				dummy.scale_cov()
+			dummy.save()
+			del dummy
+			gc.collect(generation=2)
+
+calculate_cov()
