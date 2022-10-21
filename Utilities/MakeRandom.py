@@ -37,8 +37,8 @@ def save_array(cov_holder,H_out,p_hat_out,kk,label):
 	print('saved H instance '+str(kk))
 	save(filepath,data)
 
-def make_random():
-	for depth_idx in [2,4,6,8,10,12,14,16,18,20,22,24]:
+def make_random(cov=CovCM4Global):
+	for depth_idx in range(24):
 		cov_holder = CovCM4Global.load(depth_idx = depth_idx)
 		for float_num in range(0,1001,50):
 			for kk in range(50):

@@ -5,8 +5,8 @@ from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 import datetime
 from GeneralUtilities.Compute.list import VariableList,GeoList
 import scipy.sparse
-from GeneralUtilities.Data.lagrangian.bgc.bgc_read import BGCReader
-from GeneralUtilities.Data.lagrangian.argo.argo_read import ArgoReader, full_argo_list
+from GeneralUtilities.Data.Lagrangian.bgc.bgc_read import BGCReader
+from GeneralUtilities.Data.Lagrangian.argo.argo_read import ArgoReader, full_argo_list
 from TransitionMatrix.Utilities.TransGeo import GeoBase
 import geopy
 from random import sample
