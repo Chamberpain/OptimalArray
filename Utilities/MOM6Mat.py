@@ -106,10 +106,9 @@ class CovMOM6(CovArray):
 
 	@staticmethod
 	def get_depths():
-		files,var = CovMOM6.get_filenames()[0]
-		file = files[0]
+		file = CovMOM6.get_filenames()[0]
 		dh = Dataset(file)
-		return dh["lev_bnds"][:]
+		return dh["depth"][:]
 
 	@staticmethod
 	def get_filenames():
@@ -119,9 +118,9 @@ class CovMOM6(CovArray):
 	def load(cls,depth_idx):
 		holder = cls(depth_idx = depth_idx)
 		trans_geo = holder.trans_geo.set_l_mult(1)
-		submeso_cov = InverseInstance.load(trans_geo = holder.trans_geo)
-		trans_geo = holder.trans_geo.set_l_mult(5)
-		global_cov = InverseInstance.load(trans_geo = holder.trans_geo)
+		submeso_cov = InverseInstance.load(trans_geo = trans_geo)
+		trans_geo = holder.trans_geo.set_l_mult(2)
+		global_cov = InverseInstance.load(trans_geo = trans_geo)
 		holder.cov = global_cov+submeso_cov
 		return holder
 
@@ -134,7 +133,7 @@ class CovMOM6CCS(CovMOM6):
 def calculate_cov():
 	for covclass in [CovMOM6CCS]:
 		# for depth in [8,26]:
-		for depth in range(24):
+		for depth in [8,18]:
 			print('depth idx is '+str(depth))
 			dummy = covclass(depth_idx = depth)
 			if os.path.isfile(dummy.trans_geo.make_inverse_filename()):
@@ -144,11 +143,10 @@ def calculate_cov():
 				dummy.calculate_cov()
 				dummy.scale_cov()
 			except FileNotFoundError:
-				# dummy.stack_data()
+				# dummy.staclk_data()
 				dummy.calculate_cov()
 				dummy.scale_cov()
 			dummy.save()
 			del dummy
 			gc.collect(generation=2)
 
-calculate_cov()

@@ -3,7 +3,6 @@ from OptimalArray.Utilities.CM4Mat import CovCM4GlobalSubsample, CovCM4
 from OptimalArray.Utilities.CorMat import CovArray 
 from OptimalArray.Utilities.H import HInstance,Float
 from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR
-from OptimalArray.Data.__init__ import ROOT_DIR
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from GeneralUtilities.Data.pickle_utilities import save,load
 import numpy as np

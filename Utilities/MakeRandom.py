@@ -1,8 +1,8 @@
 from OptimalArray.Utilities.CorMat import InverseInstance
 from OptimalArray.Utilities.CM4Mat import CovCM4Global
+from OptimalArray.Utilities.MOM6Mat import CovMOM6CCS
 from OptimalArray.Utilities.H import HInstance,Float
-from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR
-from OptimalArray.Data.__init__ import ROOT_DIR
+from OptimalArray.Utilities.Data.__init__ import ROOT_DIR
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from GeneralUtilities.Data.pickle_utilities import save,load
 import numpy as np
@@ -37,13 +37,13 @@ def save_array(cov_holder,H_out,p_hat_out,kk,label):
 	print('saved H instance '+str(kk))
 	save(filepath,data)
 
-def make_random(cov=CovCM4Global):
+def make_random(cov=CovMOM6CCS):
 	for depth_idx in range(24):
-		cov_holder = CovCM4Global.load(depth_idx = depth_idx)
-		for float_num in range(0,1001,50):
+		cov_holder = cov.load(depth_idx = depth_idx)
+		for float_num in range(0,200,10):
 			for kk in range(50):
 				print ('depth = '+str(depth_idx)+', float_num = '+str(float_num)+', kk = '+str(kk))
-				label = 'random_'+str(float_num)
+				label = cov.label+'_'+CovMOM6CCS.trans_geo_class.region+'_'+'random_'+str(float_num)
 				filepath = make_filename(label,cov_holder.trans_geo.depth_idx,kk)
 				if os.path.exists(filepath):
 					continue
@@ -73,3 +73,4 @@ def make_random_optimal():
 				p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
 				save_array(cov_holder,H_random,p_hat_random,kk,label)
 				
+make_random()
