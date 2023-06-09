@@ -145,7 +145,7 @@ class CovCM4(CovArray):
 	def get_filenames():
 		master_dict = {}
 		for file in os.listdir(CovCM4.data_directory):
-			if file == '.DS_Store':
+			if '.DS_Store' in file:
 				continue
 			filename = os.path.join(CovCM4.data_directory,file)
 			filename = filename

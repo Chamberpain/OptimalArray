@@ -1,4 +1,5 @@
 from OptimalArray.Utilities.CorGeo import InverseGeo
+from GeneralUtilities.Plot.Cartopy.regional_plot import CCSCartopy
 from GeneralUtilities.Plot.Cartopy.eulerian_plot import GlobalCartopy
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from OptimalArray.Utilities.CorMat import CovArray,InverseInstance
@@ -15,7 +16,7 @@ import gc
 class InverseCristina(InverseGeo):
 	facecolor = 'salmon'
 	facename = 'California Current'
-	plot_class = GlobalCartopy
+	plot_class = CCSCartopy
 	region = 'ccs'
 	lat_sep=.5
 	lon_sep=.5
@@ -133,7 +134,7 @@ class CovMOM6CCS(CovMOM6):
 def calculate_cov():
 	for covclass in [CovMOM6CCS]:
 		# for depth in [8,26]:
-		for depth in [8,18]:
+		for depth in [4,6,10,12,14,16,18,20,22]:
 			print('depth idx is '+str(depth))
 			dummy = covclass(depth_idx = depth)
 			if os.path.isfile(dummy.trans_geo.make_inverse_filename()):
