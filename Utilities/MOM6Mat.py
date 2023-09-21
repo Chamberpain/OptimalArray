@@ -36,10 +36,36 @@ class InverseCristina(InverseGeo):
 		return LonList(nc_fid['lon'][:][0,::2])
 
 	def get_dummy_file(self):
-		return os.path.join(get_data_folder(),'Processed/mom6/MOM6_CCS_bgc_phys_2008_01.nc')
+		return os.path.join(get_data_folder(),'Processed/ca_mom6/MOM6_CCS_bgc_phys_2008_01.nc')
+
+class InverseGOM(InverseGeo):
+	facecolor = 'aquamarine'
+	facename = 'Gulf of Mexico'
+	plot_class = GOMCartopy
+	region = 'gom'
+	lat_sep=.5
+	lon_sep=.5
+	l=1
+	coord_list = [(-130.4035261964233,55),(-135.07,55),(-135.07,19.90),
+	(-104.6431889409656,19.90),(-105.4266560754428,23.05901404803846),(-113.2985172073168,31.65136326179817),
+	(-117.3894585799435,32.49679570904591),(-121.8138182188833,35.72586240471471),(-123.4646493631059,38.58314108287027),
+	(-123.9821609070654,42.58507262179968),(-123.5031152865783,47.69525998053675),(-127.0812674058722,49.62755804643379),
+	(-130.4035261964233,55)]
+
+	def get_lat_bins(self):
+		nc_fid = Dataset(self.get_dummy_file())
+		return LatList(nc_fid['lat'][:][::2,0])
+
+	def get_lon_bins(self):
+		nc_fid = Dataset(self.get_dummy_file())
+		return LonList(nc_fid['lon'][:][0,::2])
+
+	def get_dummy_file(self):
+		return os.path.join(get_data_folder(),'Processed/gom_mom6/MOM6_CCS_bgc_phys_2008_01.nc')
+
+
 
 class CovMOM6(CovArray):
-	data_directory = os.path.join(get_data_folder(),'Processed/mom6/')
 	chl_depth_idx = 10
 	from OptimalArray.__init__ import ROOT_DIR
 	label = 'mom6'
@@ -126,7 +152,14 @@ class CovMOM6(CovArray):
 		return holder
 
 class CovMOM6CCS(CovMOM6):
+	data_directory = os.path.join(get_data_folder(),'Processed/ca_mom6/')
 	trans_geo_class = InverseCristina
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovMOM6GOM(CovMOM6):
+	data_directory = os.path.join(get_data_folder(),'Processed/gom_mom6/')
+	trans_geo_class = InverseGOM
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
 
