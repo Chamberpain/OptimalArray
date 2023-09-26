@@ -1,5 +1,5 @@
 from OptimalArray.Utilities.CorGeo import InverseGeo
-from GeneralUtilities.Plot.Cartopy.regional_plot import CCSCartopy
+from GeneralUtilities.Plot.Cartopy.regional_plot import CCSCartopy, GOMCartopy
 from GeneralUtilities.Plot.Cartopy.eulerian_plot import GlobalCartopy
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from OptimalArray.Utilities.CorMat import CovArray,InverseInstance
