@@ -155,7 +155,7 @@ class CovMOM6CCS(CovMOM6):
 
 	@staticmethod
 	def get_filenames():
-		return [os.path.join(CovMOM6CCS.data_directory,x) for x in os.listdir(CovMOM6.data_directory)]
+		return [os.path.join(CovMOM6CCS.data_directory,x) for x in os.listdir(CovMOM6CCS.data_directory)]
 
 
 
@@ -167,7 +167,7 @@ class CovMOM6GOM(CovMOM6):
 
 	@staticmethod
 	def get_filenames():
-		return [os.path.join(CovMOM6GOM.data_directory,x) for x in os.listdir(CovMOM6.data_directory)]
+		return [os.path.join(CovMOM6GOM.data_directory,x) for x in os.listdir(CovMOM6GOM.data_directory)]
 
 
 def calculate_cov():
