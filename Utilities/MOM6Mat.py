@@ -108,8 +108,6 @@ class CovMOM6(CovArray):
 		del var_temp
 		return array_variable_list
 
-
-
 	@staticmethod
 	def get_depths():
 		file = CovMOM6.get_filenames()[0]
@@ -125,17 +123,6 @@ class CovMOM6(CovArray):
 		global_cov = InverseInstance.load(trans_geo = trans_geo)
 		holder.cov = global_cov+submeso_cov
 		return holder
-
-class CovMOM6CCS(CovMOM6):
-	data_directory = os.path.join(get_data_folder(),'Processed/ca_mom6/')
-	trans_geo_class = InverseCristina
-	max_depth_lev = 25  #this corresponds to 2062.5 meters 
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
-	@staticmethod
-	def get_filenames():
-		return [os.path.join(CovMOM6CCS.data_directory,x) for x in os.listdir(CovMOM6CCS.data_directory)]
 
 	def dimensions_and_masks(self):
 		file = self.get_filenames()[0]
@@ -158,6 +145,17 @@ class CovMOM6CCS(CovMOM6):
 		geolist = GeoList([geopy.Point(x) for x in list(zip(Y,X))],lat_sep=self.trans_geo.lat_sep,lon_sep=self.trans_geo.lon_sep)
 		print(geolist)
 		return (total_mask,geolist)
+
+class CovMOM6CCS(CovMOM6):
+	data_directory = os.path.join(get_data_folder(),'Processed/ca_mom6/')
+	trans_geo_class = InverseCristina
+	max_depth_lev = 25  #this corresponds to 2062.5 meters 
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+	@staticmethod
+	def get_filenames():
+		return [os.path.join(CovMOM6CCS.data_directory,x) for x in os.listdir(CovMOM6CCS.data_directory)]
 
 class CovMOM6GOM(CovMOM6):
 	data_directory = os.path.join(get_data_folder(),'Processed/gom_mom6/')
