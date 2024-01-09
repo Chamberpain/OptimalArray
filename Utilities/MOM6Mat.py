@@ -184,4 +184,4 @@ def calculate_cov():
 			dummy.save()
 			del dummy
 			gc.collect(generation=2)
-
+calculate_cov()
