@@ -66,7 +66,6 @@ class InverseGOM(InverseGeo):
 
 
 class CovMOM6(CovArray):
-	data_directory = os.path.join(get_data_folder(),'Processed/mom6/')	
 	chl_depth_idx = 10
 	from OptimalArray.__init__ import ROOT_DIR
 	label = 'mom6'
