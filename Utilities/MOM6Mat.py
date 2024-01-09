@@ -138,10 +138,6 @@ class CovMOM6(CovArray):
 		dh = Dataset(file)
 		return dh["depth"][:]
 
-	@staticmethod
-	def get_filenames():
-		return [os.path.join(CovMOM6.data_directory,x) for x in os.listdir(CovMOM6.data_directory)]
-
 	@classmethod
 	def load(cls,depth_idx):
 		holder = cls(depth_idx = depth_idx)
@@ -158,11 +154,21 @@ class CovMOM6CCS(CovMOM6):
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
 
+	@staticmethod
+	def get_filenames():
+		return [os.path.join(CovMOM6CCS.data_directory,x) for x in os.listdir(CovMOM6.data_directory)]
+
+
+
 class CovMOM6GOM(CovMOM6):
 	data_directory = os.path.join(get_data_folder(),'Processed/gom_mom6/')
 	trans_geo_class = InverseGOM
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
+
+	@staticmethod
+	def get_filenames():
+		return [os.path.join(CovMOM6GOM.data_directory,x) for x in os.listdir(CovMOM6.data_directory)]
 
 
 def calculate_cov():
