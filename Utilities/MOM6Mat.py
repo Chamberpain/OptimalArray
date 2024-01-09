@@ -166,7 +166,7 @@ class CovMOM6GOM(CovMOM6):
 
 
 def calculate_cov():
-	for covclass in [CovMOM6CCS]:
+	for covclass in [CovMOM6GOM]:
 		# for depth in [8,26]:
 		for depth in [4,6,10,12,14,16,18,20,22]:
 			print('depth idx is '+str(depth))
