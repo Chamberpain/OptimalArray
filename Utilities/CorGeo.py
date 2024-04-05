@@ -114,9 +114,9 @@ class InverseIndian(InverseGeo):
 				(33.69621689976939,-19.65087962850418),(34.1381515444963,-23.93162439597786),(30.02506496520469,-29.23313789495232),
 				(26.55519092843285,-33.21902230207225),(20.0,-34.34985699240418)]
 
-		file = os.path.join(DATA_DIR,'saf.asc')
+		file = os.path.join(DATA_DIR,'Raw/Orsi/saf.asc')
 		token = open(file,'r')
-		coord = [i.strip().split() for i in token.readlines()]
+		coord = [i.strip().split() for i in token.readlines()[1:-1]]
 		xcoord,ycoord = zip(*[(float(i[0]),float(i[1])) for i in coord if abs(float(i[0]))<179])	
 		xarray = np.array(xcoord)
 		yarray = np.array(ycoord)
@@ -139,9 +139,9 @@ class InverseSO(InverseGeo):
 	l=3
 
 	def __init__(self,*args,**kwargs):
-		file = os.path.join(DATA_DIR,'saf.asc')
+		file = os.path.join(DATA_DIR,'Raw/Orsi/saf.asc')
 		token = open(file,'r')
-		coord = [i.strip().split() for i in token.readlines()]
+		coord = [i.strip().split() for i in token.readlines()[1:-1]]
 		xcoord,ycoord = zip(*[(float(i[0]),float(i[1])) for i in coord if abs(float(i[0]))<179])	
 		xarray = np.array(xcoord)
 		yarray = np.array(ycoord)
@@ -173,7 +173,7 @@ class InverseNAtlantic(InverseGeo):
 
 class InverseTropicalAtlantic(InverseGeo):
 	facecolor = 'dodgerblue'
-	facename = 'Topical Atlantic'
+	facename = 'Tropical Atlantic'
 	plot_class = GlobalCartopy
 	region = 'tropical_atlantic'
 	lat_sep=1
@@ -214,9 +214,9 @@ class InverseSAtlantic(InverseGeo):
 		(-69.44497824762939,-50.47718723831122),(-69.17545169568312,-53.05305794039962),(-66.00425784471349,-54.75603363189224),
 		(-67.0,-56.03247111630986)]
 
-		file = os.path.join(DATA_DIR,'saf.asc')
+		file = os.path.join(DATA_DIR,'Raw/Orsi/saf.asc')
 		token = open(file,'r')
-		coord = [i.strip().split() for i in token.readlines()]
+		coord = [i.strip().split() for i in token.readlines()[1:-1]]
 		xcoord,ycoord = zip(*[(float(i[0]),float(i[1])) for i in coord if abs(float(i[0]))<179])	
 		xarray = np.array(xcoord)
 		yarray = np.array(ycoord)
@@ -266,7 +266,7 @@ class InverseCCS(InverseGeo):
 
 class InverseTropicalPacific(InverseGeo):
 	facecolor = 'yellow'
-	facename = 'Topical Pacific'
+	facename = 'Tropical Pacific'
 	plot_class = GlobalCartopy
 	region = 'tropical_pacific'
 	lat_sep=1
@@ -297,9 +297,9 @@ class InverseSPacific(InverseGeo):
 		Ncoords = [(293,-56.05831143635918),(289.9809377310016,-54.94099908902054),(285.5299045763852,-50.6355821528286),
 		(287.0402359655728,-42.09748969048012),(289.3933239800496,-32.89435779688432),(291.0003553094372,-20.0),(179.9,-20)]
 		Ncoords = [(x-360,y) for x,y in Ncoords]
-		file = os.path.join(DATA_DIR,'saf.asc')
+		file = os.path.join(DATA_DIR,'Raw/Orsi/saf.asc')
 		token = open(file,'r')
-		coord = [i.strip().split() for i in token.readlines()]
+		coord = [i.strip().split() for i in token.readlines()[1:-1]]
 		xcoord,ycoord = zip(*[(float(i[0]),float(i[1])) for i in coord if abs(float(i[0]))<179])	
 		xarray = np.array(xcoord)
 		yarray = np.array(ycoord)

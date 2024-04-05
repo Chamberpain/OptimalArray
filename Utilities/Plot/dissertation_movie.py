@@ -6,6 +6,8 @@ import matplotlib.colors as colors
 from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 import cartopy.crs as ccrs
+import cmocean
+
 
 plt.rcParams['font.size'] = '16'
 file_handler = FilePathHandler(ROOT_DIR,'dissertation_movie')
@@ -19,6 +21,7 @@ lons, lats = class_list[0].return_dimensions()
 
 label_list = ['$mol\ m^{-3}$','$^\circ C$','$mg\ m^{-3}$']
 data_list = [o2_data,theta0_data,chl_data]
+cm_list = [cmocean.cm.oxy,cmocean.cm.thermal,cmocean.cm.algae]
 median_list = [np.median(x) for x in data_list]
 std_list = [np.std(x) for x in data_list]
 upper_weighting_list = [.8,0.7,1.2]
@@ -34,11 +37,11 @@ def make_field_movie():
 		ax2 = fig.add_subplot(1, 3, 2, projection=ccrs.PlateCarree())
 		ax3 = fig.add_subplot(1, 3, 3, projection=ccrs.PlateCarree())
 		ax_list = [ax1,ax2,ax3]
-		for ax,data,vmin,vmax,label in zip(ax_list,data_list,vmin_list,vmax_list,label_list):
+		for ax,data,cm,vmin,vmax,label in zip(ax_list,data_list,cm_list,vmin_list,vmax_list,label_list):
 			holder = GlobalCartopy(ax=ax,adjustable=True)
 			XX,YY,ax = holder.get_map()
 			XX,YY = np.meshgrid(lons,lats)
-			pcm = ax.pcolormesh(XX,YY,data[k,:,:],zorder=1,vmin=max([0,vmin]), vmax=vmax)
+			pcm = ax.pcolormesh(XX,YY,data[k,:,:],zorder=1,cmap=cm,vmin=max([0,vmin]), vmax=vmax)
 			fig.colorbar(pcm,ax=ax, location='bottom',label=label)
 		plt.savefig(file_handler.out_file('')+'/field/'+str(k),bbox_inches='tight')
 		plt.close()

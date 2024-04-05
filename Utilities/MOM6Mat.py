@@ -29,7 +29,7 @@ class InverseCristina(InverseGeo):
 
 	def get_lat_bins(self):
 		nc_fid = Dataset(self.get_dummy_file())
-		return LatList(nc_fid['lat'][:][::2,0])
+		return LatList(nc_fid['lat'][:][::2,-1])
 
 	def get_lon_bins(self):
 		nc_fid = Dataset(self.get_dummy_file())
@@ -46,22 +46,26 @@ class InverseGOM(InverseGeo):
 	lat_sep=.5
 	lon_sep=.5
 	l=1
-	coord_list = [(-130.4035261964233,55),(-135.07,55),(-135.07,19.90),
-	(-104.6431889409656,19.90),(-105.4266560754428,23.05901404803846),(-113.2985172073168,31.65136326179817),
-	(-117.3894585799435,32.49679570904591),(-121.8138182188833,35.72586240471471),(-123.4646493631059,38.58314108287027),
-	(-123.9821609070654,42.58507262179968),(-123.5031152865783,47.69525998053675),(-127.0812674058722,49.62755804643379),
-	(-130.4035261964233,55)]
+	coord_list = [(-93.83443543373453,30.31192409716139),(-97.33301191109445,28.53461995311981),(-98.22951964586647,26.56102839784981),
+	(-98.23176621309408,21.14640430279481),(-94.75173730705114,17.69018757346009),(-89.11465568491809,17.20328330857444),
+	(-89.06712280579349,15.47270523764778),(-84.25124860521271,15.32356939252626),(-84.11167583129146,10.60002449442026),
+	(-81.68974915579967,8.513630710186039),(-79.21737886089964,9.102618171647688),(-76.35489819907755,7.748300845902937),
+	(-72.52740327179197,10.70167332395043),(-62.02934864430507,9.44397718074659),(-59.67683898413669,12.02173132700068),
+	(-59.82535447869236,14.70093873644528),(-61.79537355504573,17.49727742725868),(-64.89185977095053,18.25534196301828),
+	(-70.61882162015974,18.45320848406356),(-72.82039923208698,19.93626561168838),(-80.81793590533317,22.75362929988757),
+	(-80.70017685693531,25.6944945895363),(-82.68021005951927,30.09720890646617),(-93.83443543373453,30.31192409716139)]
+
 
 	def get_lat_bins(self):
 		nc_fid = Dataset(self.get_dummy_file())
-		return LatList(nc_fid['lat'][:][::2,0])
+		return LatList(nc_fid['lat'][:][::2,-1])
 
 	def get_lon_bins(self):
 		nc_fid = Dataset(self.get_dummy_file())
 		return LonList(nc_fid['lon'][:][0,::2])
 
 	def get_dummy_file(self):
-		return os.path.join(get_data_folder(),'Processed/gom_mom6/MOM6_CCS_bgc_phys_2008_01.nc')
+		return os.path.join(get_data_folder(),'Processed/gom_mom6/MOM6_GoM_bgc_phys_2008_01.nc')
 
 
 
@@ -87,11 +91,15 @@ class CovMOM6(CovArray):
 			if (self.trans_geo.depth_idx>self.chl_depth_idx)&(var=='chl'):
 				continue
 			for file_ in self.get_filenames():
+				year = int(file_[-10:-6])
+				month = int(file_[-5:-3])
 				dh = Dataset(file_)
-				time_holder = [datetime.date(int(x),int(y),int(z)) for x,y,z in zip(dh['year'][:].tolist(),dh['month'][:].tolist(),dh['day'][:].tolist())]
-				time_list.append(time_holder)
-				var_temp = dh[var][:,self.trans_geo.depth_idx,::2,::2]
-				holder_list.append(var_temp[:,self.trans_geo.truth_array].data)
+				time_list.append(datetime.date(year,month,1))
+				# time_holder = [datetime.date(int(x),int(y),int(z)) for x,y,z in zip(dh['year'][:].tolist(),dh['month'][:].tolist(),dh['day'][:].tolist())]
+				# time_list.append(time_holder)
+
+				var_temp = dh[var][self.trans_geo.depth_idx,::2,::2]
+				holder_list.append(var_temp[self.trans_geo.truth_array].data)
 			holder_total_list = np.vstack([x for _,x in sorted(zip(time_list,holder_list))])
 			if var=='chl':
 				assert (holder_total_list>0).all()
@@ -127,7 +135,7 @@ class CovMOM6(CovArray):
 	def dimensions_and_masks(self):
 		file = self.get_filenames()[0]
 		dh = Dataset(file)
-		temp = dh['so'][:,self.max_depth_lev,::2,::2]
+		temp = dh['so'][self.max_depth_lev,::2,::2]
 		depth_mask = ~temp.mask[0] # no need to grab values deeper than 2000 meters
 		X = dh['lon'][:][::2,::2]
 		Y = dh['lat'][:][::2,::2]
@@ -160,7 +168,7 @@ class CovMOM6CCS(CovMOM6):
 class CovMOM6GOM(CovMOM6):
 	data_directory = os.path.join(get_data_folder(),'Processed/gom_mom6/')
 	trans_geo_class = InverseGOM
-	max_depth_lev = 19  #this corresponds to 2062.5 meters 
+	max_depth_lev = 18  #this corresponds to 2062.5 meters 
 
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)
@@ -189,4 +197,3 @@ def calculate_cov():
 			dummy.save()
 			del dummy
 			gc.collect(generation=2)
-calculate_cov()
