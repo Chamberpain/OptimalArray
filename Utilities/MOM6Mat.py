@@ -18,8 +18,8 @@ class InverseCristina(InverseGeo):
 	facename = 'California Current'
 	plot_class = CCSCartopy
 	region = 'ccs'
-	lat_sep=.5
-	lon_sep=.5
+	lat_sep=.25
+	lon_sep=.25
 	l=1
 	coord_list = [(-130.4035261964233,55),(-135.07,55),(-135.07,19.90),
 	(-104.6431889409656,19.90),(-105.4266560754428,23.05901404803846),(-113.2985172073168,31.65136326179817),
@@ -29,11 +29,11 @@ class InverseCristina(InverseGeo):
 
 	def get_lat_bins(self):
 		nc_fid = Dataset(self.get_dummy_file())
-		return LatList(nc_fid['lat'][:][::2,-1])
+		return LatList(nc_fid['lat'][:][:,-1])
 
 	def get_lon_bins(self):
 		nc_fid = Dataset(self.get_dummy_file())
-		return LonList(nc_fid['lon'][:][0,::2])
+		return LonList(nc_fid['lon'][:][0,:])
 
 	def get_dummy_file(self):
 		return os.path.join(get_data_folder(),'Processed/ca_mom6/MOM6_CCS_bgc_phys_2008_01.nc')
@@ -43,8 +43,8 @@ class InverseGOM(InverseGeo):
 	facename = 'Gulf of Mexico'
 	plot_class = GOMCartopy
 	region = 'gom'
-	lat_sep=.5
-	lon_sep=.5
+	lat_sep=.25
+	lon_sep=.25
 	l=1
 	coord_list = [(-93.83443543373453,30.31192409716139),(-97.33301191109445,28.53461995311981),(-98.22951964586647,26.56102839784981),
 	(-98.23176621309408,21.14640430279481),(-94.75173730705114,17.69018757346009),(-89.11465568491809,17.20328330857444),
@@ -58,11 +58,11 @@ class InverseGOM(InverseGeo):
 
 	def get_lat_bins(self):
 		nc_fid = Dataset(self.get_dummy_file())
-		return LatList(nc_fid['lat'][:][::2,-1])
+		return LatList(nc_fid['lat'][:][:,-1])
 
 	def get_lon_bins(self):
 		nc_fid = Dataset(self.get_dummy_file())
-		return LonList(nc_fid['lon'][:][0,::2])
+		return LonList(nc_fid['lon'][:][0,:])
 
 	def get_dummy_file(self):
 		return os.path.join(get_data_folder(),'Processed/gom_mom6/MOM6_GoM_bgc_phys_2008_01.nc')
@@ -98,7 +98,7 @@ class CovMOM6(CovArray):
 				# time_holder = [datetime.date(int(x),int(y),int(z)) for x,y,z in zip(dh['year'][:].tolist(),dh['month'][:].tolist(),dh['day'][:].tolist())]
 				# time_list.append(time_holder)
 
-				var_temp = dh[var][self.trans_geo.depth_idx,::2,::2]
+				var_temp = dh[var][self.trans_geo.depth_idx,:,:]
 				holder_list.append(var_temp[self.trans_geo.truth_array].data)
 			holder_total_list = np.vstack([x for _,x in sorted(zip(time_list,holder_list))])
 			if var=='chl':
@@ -135,10 +135,10 @@ class CovMOM6(CovArray):
 	def dimensions_and_masks(self):
 		file = self.get_filenames()[0]
 		dh = Dataset(file)
-		temp = dh['so'][self.max_depth_lev,::2,::2]
+		temp = dh['so'][self.max_depth_lev,:,:]
 		depth_mask = ~temp.mask[0] # no need to grab values deeper than 2000 meters
-		X = dh['lon'][:][::2,::2]
-		Y = dh['lat'][:][::2,::2]
+		X = dh['lon'][:][:,:]
+		Y = dh['lat'][:][:,:]
 		geolist = GeoList([geopy.Point(x) for x in list(zip(Y.ravel(),X.ravel()))],lat_sep=self.trans_geo.lat_sep,lon_sep=self.trans_geo.lon_sep)
 		oceans_list = []
 		for k,dummy in enumerate(geolist.to_shapely()):
