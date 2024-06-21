@@ -20,7 +20,7 @@ class InverseCristina(InverseGeo):
 	region = 'ccs'
 	lat_sep=.25
 	lon_sep=.25
-	l=1
+	l=2
 	coord_list = [(-130.4035261964233,55),(-135.07,55),(-135.07,19.90),
 	(-104.6431889409656,19.90),(-105.4266560754428,23.05901404803846),(-113.2985172073168,31.65136326179817),
 	(-117.3894585799435,32.49679570904591),(-121.8138182188833,35.72586240471471),(-123.4646493631059,38.58314108287027),
@@ -43,9 +43,9 @@ class InverseGOM(InverseGeo):
 	facename = 'Gulf of Mexico'
 	plot_class = GOMCartopy
 	region = 'gom'
-	lat_sep=.25
-	lon_sep=.25
-	l=1
+	lat_sep=.125
+	lon_sep=.125
+	l=2
 	coord_list = [(-93.83443543373453,30.31192409716139),(-97.33301191109445,28.53461995311981),(-98.22951964586647,26.56102839784981),
 	(-98.23176621309408,21.14640430279481),(-94.75173730705114,17.69018757346009),(-89.11465568491809,17.20328330857444),
 	(-89.06712280579349,15.47270523764778),(-84.25124860521271,15.32356939252626),(-84.11167583129146,10.60002449442026),
@@ -116,9 +116,9 @@ class CovMOM6(CovArray):
 		del var_temp
 		return array_variable_list
 
-	@staticmethod
-	def get_depths():
-		file = CovMOM6.get_filenames()[0]
+	@classmethod
+	def get_depths(cls):
+		file = cls.get_filenames()[0]
 		dh = Dataset(file)
 		return dh["depth"][:]
 
@@ -131,6 +131,17 @@ class CovMOM6(CovArray):
 		global_cov = InverseInstance.load(trans_geo = trans_geo)
 		holder.cov = global_cov+submeso_cov
 		return holder
+
+class CovMOM6CCS(CovMOM6):
+	data_directory = os.path.join(get_data_folder(),'Processed/ca_mom6/')
+	trans_geo_class = InverseCristina
+	max_depth_lev = 25  #this corresponds to 2062.5 meters 
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+	@staticmethod
+	def get_filenames():
+		return [os.path.join(CovMOM6CCS.data_directory,x) for x in os.listdir(CovMOM6CCS.data_directory)]
 
 	def dimensions_and_masks(self):
 		file = self.get_filenames()[0]
@@ -154,16 +165,6 @@ class CovMOM6(CovArray):
 		print(geolist)
 		return (total_mask,geolist)
 
-class CovMOM6CCS(CovMOM6):
-	data_directory = os.path.join(get_data_folder(),'Processed/ca_mom6/')
-	trans_geo_class = InverseCristina
-	max_depth_lev = 25  #this corresponds to 2062.5 meters 
-	def __init__(self,*args,**kwargs):
-		super().__init__(*args,**kwargs)
-
-	@staticmethod
-	def get_filenames():
-		return [os.path.join(CovMOM6CCS.data_directory,x) for x in os.listdir(CovMOM6CCS.data_directory)]
 
 class CovMOM6GOM(CovMOM6):
 	data_directory = os.path.join(get_data_folder(),'Processed/gom_mom6/')
@@ -177,11 +178,33 @@ class CovMOM6GOM(CovMOM6):
 	def get_filenames():
 		return [os.path.join(CovMOM6GOM.data_directory,x) for x in os.listdir(CovMOM6GOM.data_directory)]
 
+	def dimensions_and_masks(self):
+		file = self.get_filenames()[0]
+		dh = Dataset(file)
+		temp = dh['so'][self.max_depth_lev,:,:]
+		depth_mask = ~temp.mask # no need to grab values deeper than 2000 meters
+		X = dh['lon'][:][:,:]
+		Y = dh['lat'][:][:,:]
+		geolist = GeoList([geopy.Point(x) for x in list(zip(Y.ravel(),X.ravel()))],lat_sep=self.trans_geo.lat_sep,lon_sep=self.trans_geo.lon_sep)
+		oceans_list = []
+		for k,dummy in enumerate(geolist.to_shapely()):
+			print(k)
+			oceans_list.append(self.trans_geo.ocean_shape.contains(dummy))	# only choose coordinates within the ocean basin of interest
+		total_mask = (depth_mask)&(np.array(oceans_list).reshape(X.shape))
+
+		lat_list = self.trans_geo.get_lat_bins()
+		lon_list = self.trans_geo.get_lon_bins()
+		X = [lon_list.find_nearest(x) for x in X[total_mask]]
+		Y = [lat_list.find_nearest(x) for x in Y[total_mask]]
+		geolist = GeoList([geopy.Point(x) for x in list(zip(Y,X))],lat_sep=self.trans_geo.lat_sep,lon_sep=self.trans_geo.lon_sep)
+		print(geolist)
+		return (total_mask,geolist)
+
 
 def calculate_cov():
 	for covclass in [CovMOM6GOM]:
 		# for depth in [8,26]:
-		for depth in [6,9,11,13,15,17]:
+		for depth in [2]:
 			print('depth idx is '+str(depth))
 			dummy = covclass(depth_idx = depth)
 			if os.path.isfile(dummy.trans_geo.make_inverse_filename()):

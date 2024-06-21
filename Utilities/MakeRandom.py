@@ -1,6 +1,6 @@
 from OptimalArray.Utilities.CorMat import InverseInstance
-from OptimalArray.Utilities.CM4Mat import CovCM4Global
-from OptimalArray.Utilities.MOM6Mat import CovMOM6CCS
+from OptimalArray.Utilities.CM4Mat import CovCM4Global,CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS
+from OptimalArray.Utilities.MOM6Mat import CovMOM6CCS, CovMOM6GOM, InverseGOM
 from OptimalArray.Utilities.H import HInstance,Float
 from OptimalArray.Utilities.Data.__init__ import ROOT_DIR
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
@@ -37,14 +37,15 @@ def save_array(cov_holder,H_out,p_hat_out,kk,label):
 	print('saved H instance '+str(kk))
 	save(filepath,data)
 
-def make_random(cov=CovMOM6CCS):
-	for depth_idx in range(24):
+def make_random(cov=CovMOM6GOM):
+	for depth_idx in [2,4,6,8,10,12,14,16]:
 		cov_holder = cov.load(depth_idx = depth_idx)
-		for float_num in range(0,200,10):
-			for kk in range(50):
+		for float_num in range(0,70,10):
+			for kk in range(10):
 				print ('depth = '+str(depth_idx)+', float_num = '+str(float_num)+', kk = '+str(kk))
-				label = cov.label+'_'+CovMOM6CCS.trans_geo_class.region+'_'+'random_'+str(float_num)
+				label = cov.label+'_'+CovMOM6GOM.trans_geo_class.region+'_'+'random_'+str(float_num)
 				filepath = make_filename(label,cov_holder.trans_geo.depth_idx,kk)
+				print(filepath)
 				if os.path.exists(filepath):
 					continue
 				save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
@@ -54,6 +55,45 @@ def make_random(cov=CovMOM6CCS):
 				else:
 					p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
 					save_array(cov_holder,H_random,p_hat_random,kk,label)
+
+
+def make_different_variable_optimization():
+	percent_list = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+	for cov in [CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS]:
+		for depth_idx in [2,4,6,8,10,12,14,16,18,20,22,24,26]:
+			cov_holder = cov.load(depth_idx = depth_idx)
+			for float_num in range(10,70,10):
+				for kk in range(10):
+					for ph_percent in percent_list:
+						for o2_percent in percent_list:
+							if depth_idx > 8:
+								H_random = HInstance.random_floats(cov_holder.trans_geo, float_num, [1,1,ph_percent,o2_percent])
+								label = cov.label+'_'+cov.trans_geo_class.region+'_'+'instrument_ph'+str(ph_percent)+'_o2'+str(o2_percent)+'_num'+str(float_num)
+								filepath = make_filename(label,cov_holder.trans_geo.depth_idx,kk)
+								print(filepath)
+								if os.path.exists(filepath):
+									continue
+								save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
+								if float_num ==0: 
+									save_array(cov_holder,H_random,cov_holder.cov,kk,label)
+								else:
+									p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
+									save_array(cov_holder,H_random,p_hat_random,kk,label)
+
+							else:
+								for chl_percent in percent_list:
+									H_random = HInstance.random_floats(cov_holder.trans_geo, float_num, [1,1,ph_percent,chl_percent,o2_percent])
+									label = cov.label+'_'+cov.trans_geo_class.region+'_'+'instrument_ph'+str(ph_percent)+'_o2'+str(o2_percent)+'_chl'+str(chl_percent)+'_num'+str(float_num)
+									filepath = make_filename(label,cov_holder.trans_geo.depth_idx,kk)
+									print(filepath)
+									if os.path.exists(filepath):
+										continue
+									save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
+									if float_num ==0: 
+										save_array(cov_holder,H_random,cov_holder.cov,kk,label)
+									else:
+										p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
+										save_array(cov_holder,H_random,p_hat_random,kk,label)
 
 def make_random_optimal():
 	depth_idx = 0
@@ -73,4 +113,3 @@ def make_random_optimal():
 				p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
 				save_array(cov_holder,H_random,p_hat_random,kk,label)
 				
-make_random()
