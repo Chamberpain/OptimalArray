@@ -67,6 +67,11 @@ class InverseGOM(InverseGeo):
 	def get_dummy_file(self):
 		return os.path.join(get_data_folder(),'Processed/gom_mom6/MOM6_GoM_bgc_phys_2008_01.nc')
 
+class OptimalGOM(InverseGOM):
+	lat_sep=.25
+	lon_sep=.25
+	l=2
+	region = 'gom_subsampled'
 
 
 class CovMOM6(CovArray):
@@ -201,10 +206,13 @@ class CovMOM6GOM(CovMOM6):
 		return (total_mask,geolist)
 
 
+class CovMOM6GOMSubsample(CovMOM6GOM):
+	trans_geo_class = OptimalGOM
+
+
 def calculate_cov():
-	for covclass in [CovMOM6GOM]:
-		# for depth in [8,26]:
-		for depth in [2]:
+	for covclass in [CovMOM6GOMSubsample]:
+		for depth in [2,4,6,8,10,12,14,16]:
 			print('depth idx is '+str(depth))
 			dummy = covclass(depth_idx = depth)
 			if os.path.isfile(dummy.trans_geo.make_inverse_filename()):

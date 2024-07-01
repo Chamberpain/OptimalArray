@@ -6,7 +6,7 @@ import os
 import shutil
 
 def calculate_cov():
-	for covclass in [CovCM4Global,CovCM4NPacific,CovCM4GlobalSubsample]:
+	for covclass in [CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS]:
 		# for depth in [8,26]:
 		for depth in [2,4,6,8,10,12,14,16,18,20,22,24,26]:
 			print('depth idx is '+str(depth))

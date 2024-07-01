@@ -58,12 +58,12 @@ def make_random(cov=CovMOM6GOM):
 
 
 def make_different_variable_optimization():
-	percent_list = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+	percent_list = [0,0.2,0.4,0.6,0.8,1]
 	for cov in [CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS]:
 		for depth_idx in [2,4,6,8,10,12,14,16,18,20,22,24,26]:
 			cov_holder = cov.load(depth_idx = depth_idx)
-			for float_num in range(10,70,10):
-				for kk in range(10):
+			for float_num in range(10,50,10):
+				for kk in range(5):
 					for ph_percent in percent_list:
 						for o2_percent in percent_list:
 							if depth_idx > 8:
@@ -79,7 +79,6 @@ def make_different_variable_optimization():
 								else:
 									p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
 									save_array(cov_holder,H_random,p_hat_random,kk,label)
-
 							else:
 								for chl_percent in percent_list:
 									H_random = HInstance.random_floats(cov_holder.trans_geo, float_num, [1,1,ph_percent,chl_percent,o2_percent])
@@ -113,3 +112,4 @@ def make_random_optimal():
 				p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
 				save_array(cov_holder,H_random,p_hat_random,kk,label)
 				
+make_different_variable_optimization()
