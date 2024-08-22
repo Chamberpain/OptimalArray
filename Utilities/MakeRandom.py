@@ -37,16 +37,20 @@ def save_array(cov_holder,H_out,p_hat_out,kk,label):
 	print('saved H instance '+str(kk))
 	save(filepath,data)
 
-def make_random(cov=CovMOM6GOM):
+def make_random(cov=CovMOM6CCS, plot=False):
 	for depth_idx in [2,4,6,8,10,12,14,16]:
 		cov_holder = cov.load(depth_idx = depth_idx)
 		for float_num in range(0,70,10):
 			for kk in range(10):
 				print ('depth = '+str(depth_idx)+', float_num = '+str(float_num)+', kk = '+str(kk))
-				label = cov.label+'_'+CovMOM6GOM.trans_geo_class.region+'_'+'random_'+str(float_num)
+				label = cov.label+'_'+cov.trans_geo_class.region+'_'+'random_'+str(float_num)
 				filepath = make_filename(label,cov_holder.trans_geo.depth_idx,kk)
 				print(filepath)
 				if os.path.exists(filepath):
+					try:
+						h_index,p_hat =load(filepath)
+					except:
+						os.remove(filepath)
 					continue
 				save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
 				H_random = HInstance.random_floats(cov_holder.trans_geo, float_num, [1]*len(cov_holder.trans_geo.variable_list))
@@ -55,6 +59,27 @@ def make_random(cov=CovMOM6GOM):
 				else:
 					p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
 					save_array(cov_holder,H_random,p_hat_random,kk,label)
+				if plot:
+					var_len = len(cov_holder.trans_geo.total_list)
+					var_idx = np.linspace(0,5*var_len,6)
+					p_hat_ox = p_hat_random[int(var_idx[4]):int(var_idx[5]),int(var_idx[4]):int(var_idx[5])]
+					cov_ox = cov_holder.get_cov('o2','o2')
+
+					cov_ox_reshaped = cov_holder.trans_geo.transition_vector_to_plottable(cov_ox.diagonal())
+					p_hat_ox_reshaped = cov_holder.trans_geo.transition_vector_to_plottable(p_hat_ox.diagonal())
+
+					lats = cov_holder.trans_geo.get_lat_bins()
+					lons = cov_holder.trans_geo.get_lon_bins()
+
+					XX,YY = np.meshgrid(lons,lats)
+
+					plt.pcolor(XX,YY,p_hat_ox_reshaped/cov_ox_reshaped)
+
+					x = [x.longitude for x in H_random.return_pos_of_bgc()]
+					y = [x.latitude for x in H_random.return_pos_of_bgc()]
+
+					plt.scatter(x,y)
+					plt.colorbar()
 
 
 def make_different_variable_optimization():
@@ -62,8 +87,8 @@ def make_different_variable_optimization():
 	for cov in [CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS]:
 		for depth_idx in [2,4,6,8,10,12,14,16,18,20,22,24,26]:
 			cov_holder = cov.load(depth_idx = depth_idx)
-			for float_num in range(10,50,10):
-				for kk in range(5):
+			for float_num in range(10,80,10):
+				for kk in range(20):
 					for ph_percent in percent_list:
 						for o2_percent in percent_list:
 							if depth_idx > 8:
@@ -112,4 +137,3 @@ def make_random_optimal():
 				p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
 				save_array(cov_holder,H_random,p_hat_random,kk,label)
 				
-make_different_variable_optimization()

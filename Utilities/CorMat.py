@@ -205,7 +205,7 @@ class CovElement(np.ndarray):
 class CovArray(object):
 	def __init__(self,*args,depth_idx=0,variable_list = None,**kwargs):
 
-		self.trans_geo = self.trans_geo_class(depth_idx = depth_idx,variable_list=variable_list,model_type=self.label)
+		self.trans_geo = self.trans_geo_class(depth_idx = depth_idx,variable_list=variable_list)
 		truth_array,index_list = self.dimensions_and_masks()
 		self.trans_geo.set_total_list(index_list)
 		self.trans_geo.set_truth_array(truth_array)

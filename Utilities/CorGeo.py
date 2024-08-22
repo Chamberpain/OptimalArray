@@ -16,13 +16,13 @@ unit_dict = {'salt':'psu','temp':'C','dic':'mol m$^{-2}$','o2':'mol m$^{-2}$'}
 variable_translation_dict = {'thetao':'TEMP','so':'PSAL','ph':'PH_IN_SITU_TOTAL','chl':'CHLA','o2':'DOXY'}
 
 class InverseGeo(GeoBase):
-	def __init__(self,*args,depth_idx = 0,l_mult = 5,variable_list=['thetao','so'],model_type='cm4',**kwargs):
+	def __init__(self,*args,depth_idx = 0,l_mult = 5,variable_list=['thetao','so'],**kwargs):
 		super().__init__(*args,lat_sep=self.lat_sep,lon_sep=self.lon_sep,**kwargs)
 		self.ocean_shape = shapely.geometry.MultiPolygon([shapely.geometry.Polygon(self.coord_list)])
 		self.depth_idx = depth_idx
 		self.l_mult = l_mult
 		self.variable_list = variable_list
-		self.file_handler = FilePathHandler(ROOT_DIR,self.region+'/'+model_type+'/depth_idx_'+str(depth_idx))
+		self.file_handler = FilePathHandler(ROOT_DIR,self.region+'/'+self.model_type+'/depth_idx_'+str(depth_idx))
 
 	def return_variance(self,variable,array):
 		idx = self.variable_list.index(variable)
@@ -80,6 +80,7 @@ class InverseGlobal(InverseGeo):
 	lat_sep=2
 	lon_sep=2
 	l=3
+	model_type = 'cm4'
 
 
 class InverseGlobalSubsample(InverseGeo):
@@ -89,6 +90,7 @@ class InverseGlobalSubsample(InverseGeo):
 	lat_sep=4
 	lon_sep=4
 	l=3
+	model_type = 'cm4'
 
 
 class InverseIndian(InverseGeo):
@@ -99,6 +101,7 @@ class InverseIndian(InverseGeo):
 	lat_sep=1
 	lon_sep=1
 	l=3
+	model_type = 'cm4'
 	def __init__(self,*args,**kwargs):
 		Ncoords = [(147,-43.52940220185144),(143.3479485275823,-37.33601703562596),(129.4747260606591,-31.65737138513975),
 				(116.8213348808513,-33.63996335620772),(114.1336886317196,-24.11210578182048),(126.8895584292698,-20.10475922355295),
@@ -137,6 +140,7 @@ class InverseSO(InverseGeo):
 	lat_sep=1
 	lon_sep=1
 	l=3
+	model_type = 'cm4'
 
 	def __init__(self,*args,**kwargs):
 		file = os.path.join(DATA_DIR,'Raw/Orsi/saf.asc')
@@ -159,6 +163,7 @@ class InverseNAtlantic(InverseGeo):
 	lat_sep=1
 	lon_sep=1
 	l=3
+	model_type = 'cm4'
 	coord_list = [(-15.99298965537844,20.0),( -16.51768345340904,21.5135791895485),( -12.85930824574853,27.3984923294593),
 	( -9.814281489721248,27.97722929568377),( -8.76926137454598,31.42705281354388),( -4.844078566635137,33.22829780277818),
 	( -7.163320253103191,43.50599870860887),( -1.036215450782537,42.18863705314655),( 0.9480128425790557,43.98587477724783),
@@ -179,6 +184,7 @@ class InverseTropicalAtlantic(InverseGeo):
 	lat_sep=1
 	lon_sep=1
 	l=3
+	model_type = 'cm4'
 	coord_list = [(-72.50562296593817,20),(-70.59819414971815,18.42528248241784),(-64.77041104794849,18.32119324306983),
 	(-61.84634301084144,17.50229847613128),(-59.59116865706082,14.6807045454499),(-59.50143599673747,11.99113053869993),
 	(-61.83274263008427,9.136119519346721),(-57.27276214022088,5.500062512667464),(-53.46534316823615,5.052030577588845),
@@ -200,6 +206,7 @@ class InverseSAtlantic(InverseGeo):
 	lat_sep=1
 	lon_sep=1
 	l=3
+	model_type = 'cm4'
 	def __init__(self,*args,**kwargs):
 		Ncoords = [(20.0,-34.35046375144582),(18.67347013265745,-33.96063336022314),(18.02848113780506,-32.94443890987839),
 		(18.49489620471581,-32.56463790467472),(18.33072742274843,-31.72700300431016),(16.89790192337395,-28.91744290987718),
@@ -236,6 +243,7 @@ class InverseNPacific(InverseGeo):
 	lat_sep=1
 	lon_sep=1
 	l=3
+	model_type = 'cm4'
 	def __init__(self,*args,**kwargs):
 		self.coord_list = [(-135,20),
 		(-135.0,55.0),(-130.5722813264113,55.0),(-130.4464882993783,55.76859441423366),
@@ -258,6 +266,7 @@ class InverseCCS(InverseGeo):
 	lat_sep=1
 	lon_sep=1
 	l=3
+	model_type = 'cm4'
 	coord_list = [(-130.4035261964233,55),(-135,55),(-135,20.00),
 	(-104.6431889409656,20.000),(-105.4266560754428,23.05901404803846),(-113.2985172073168,31.65136326179817),
 	(-117.3894585799435,32.49679570904591),(-121.8138182188833,35.72586240471471),(-123.4646493631059,38.58314108287027),
@@ -272,6 +281,7 @@ class InverseTropicalPacific(InverseGeo):
 	lat_sep=1
 	lon_sep=1
 	l=3
+	model_type = 'cm4'
 	coord_list = [(116.3572254982959,20),(108.6726987870755,17.04595063717496),(108.3121426269658,6.585853662416763),(117.5114440340038,1.262847128481247),
 	(116.3976540047779,-5.839853541195814),(126.8256721029162,-20),(180.1,-20),(180.1,20),(116.3572254982959,20)]
 	def __init__(self,*args,**kwargs):
@@ -293,6 +303,7 @@ class InverseSPacific(InverseGeo):
 	lat_sep=1
 	lon_sep=1
 	l=3
+	model_type = 'cm4'
 	def __init__(self,*args,**kwargs):
 		Ncoords = [(293,-56.05831143635918),(289.9809377310016,-54.94099908902054),(285.5299045763852,-50.6355821528286),
 		(287.0402359655728,-42.09748969048012),(289.3933239800496,-32.89435779688432),(291.0003553094372,-20.0),(179.9,-20)]
@@ -325,6 +336,7 @@ class InverseGOM(InverseGeo):
 	lat_sep=1
 	lon_sep=1
 	l=3
+	model_type = 'cm4'
 	coord_list = [(-93.83443543373453,30.31192409716139),(-97.33301191109445,28.53461995311981),(-98.22951964586647,26.56102839784981),
 	(-98.23176621309408,21.14640430279481),(-94.75173730705114,17.69018757346009),(-89.11465568491809,17.20328330857444),
 	(-89.06712280579349,15.47270523764778),(-84.25124860521271,15.32356939252626),(-84.11167583129146,10.60002449442026),

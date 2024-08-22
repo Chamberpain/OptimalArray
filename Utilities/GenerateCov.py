@@ -6,9 +6,9 @@ import os
 import shutil
 
 def calculate_cov():
-	for covclass in [CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS]:
+	for covclass in [CovCM4GOM]:
 		# for depth in [8,26]:
-		for depth in [2,4,6,8,10,12,14,16,18,20,22,24,26]:
+		for depth in [2,4]:
 			print('depth idx is '+str(depth))
 			dummy = covclass(depth_idx = depth)
 			if os.path.isfile(dummy.trans_geo.make_inverse_filename()):
