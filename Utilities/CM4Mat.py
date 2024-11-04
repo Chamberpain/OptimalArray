@@ -19,14 +19,15 @@ class CovCM4(CovArray):
 
 	def __init__(self,*args,depth_idx=0,**kwargs):
 		if depth_idx<self.chl_depth_idx:
-			variable_list = VariableList(['thetao','so','ph','chl','o2'])
+			variable_list = VariableList(['po4','thetao','so','ph','chl','o2'])
 		else:
-			variable_list = VariableList(['thetao','so','ph','o2'])
+			variable_list = VariableList(['po4','thetao','so','ph','o2'])
 		super().__init__(*args,depth_idx=depth_idx,variable_list = variable_list,**kwargs)
 
 
 	def stack_data(self):
 		master_list = self.get_filenames()
+		depth_mask = self.get_depth_mask()
 		array_variable_list = []
 		data_scale_list = []
 		for variable,files in master_list:
@@ -40,7 +41,7 @@ class CovCM4(CovArray):
 				dh = Dataset(file)
 				time_list.append(dh['time'][0])
 				var_temp = dh[variable][:,self.trans_geo.depth_idx,:,:]
-				holder_list.append(var_temp[:,self.trans_geo.truth_array].data)
+				holder_list.append(var_temp[:,depth_mask].data)
 			holder_total_list = np.vstack([x for _,x in sorted(zip(time_list,holder_list))])
 			if variable=='chl':
 				assert (holder_total_list>0).all()
@@ -51,8 +52,8 @@ class CovCM4(CovArray):
 				mean_removed,holder_total_list,data_scale = self.normalize_data(holder_total_list)				
 				print(holder_total_list.var().max())
 
-			array_variable_list.append((holder_total_list,variable))
-			data_scale_list.append((data_scale,variable))
+			array_variable_list.append((holder_total_list[:,self.trans_geo.truth_array[depth_mask]],variable))
+			data_scale_list.append((data_scale[self.trans_geo.truth_array[depth_mask]],variable))
 		del holder_total_list
 		del holder_list
 		del var_temp
@@ -101,12 +102,20 @@ class CovCM4(CovArray):
 		plt.colorbar(location='bottom',label='$(kg\ m^{-3})^2$')
 		plt.savefig(file_handler.out_file('density_'+str(self.trans_geo.depth_idx)))
 
-	def dimensions_and_masks(self):
+	def get_depth_mask(self):
 		var,files = self.get_filenames()[0]
 		file = files[0]
 		dh = Dataset(str(file))
 		temp = dh[var][:,self.max_depth_lev,:,:]
 		depth_mask = ~temp.mask[0] # no need to grab values deepeer than 2000 meters
+		return depth_mask
+
+	def dimensions_and_masks(self):
+		var,files = self.get_filenames()[0]
+		file = files[0]
+		dh = Dataset(str(file))
+		temp = dh[var][:,self.max_depth_lev,:,:]
+		depth_mask = self.get_depth_mask()
 		X,Y = np.meshgrid(np.floor(dh['lon'][:].data),np.floor(dh['lat'][:]).data)
 		X[X>=180] = X[X>=180]-360
 		lat_grid = self.trans_geo.get_lat_bins()

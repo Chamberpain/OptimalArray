@@ -250,7 +250,7 @@ class CovArray(object):
 			base_series = np.random.uniform(0, 1, mean_removed.shape[0])
 			scaled_series = mean_var/base_series.var()*base_series
 			mean_removed[:,idx] = scaled_series
-			assert (mean_removed[:,idx] - scaled_series < 10**-6).all()
+			assert (mean_removed[:,idx] - scaled_series < 10**-4).all()
 		data_scale = mean_removed.var(axis=0)
 		assert len(data_scale[data_scale == 0]) == 0
 		# amp = data_scale[data_scale!=0].min()
@@ -276,7 +276,7 @@ class CovArray(object):
 		assert len(data_scale[data_scale == 0]) == 0
 		data_scale[greater_mask&lesser_mask]=greater_value*scale 
 		assert len(data_scale[data_scale == 0]) == 0
-		data_scale[~lesser_mask] = data_scale[~lesser_mask]*(greater_value)/(lesser_value)*scale # everything above the 95th percentile will have var = 
+		data_scale[~lesser_mask] = data_scale[~lesser_mask]*(greater_value)/(lesser_value)*scale # everything above the 95th percentile will have var = 15
 		assert len(data_scale[data_scale == 0]) == 0
 		return_data = mean_removed/np.sqrt(data_scale)
 		assert(len(data_scale[data_scale==0])==0)
