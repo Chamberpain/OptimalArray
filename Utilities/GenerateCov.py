@@ -1,14 +1,15 @@
-from OptimalArray.Utilities.CM4Mat import CovCM4Global,CovCM4GlobalSubsample,CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS
-from OptimalArray.Utilities.MOM6Mat import CovMOM6CCS
+from OptimalArray.Utilities.CM4Mat import CovLowCM4Global
+# CovLowCM4Indian,CovLowCM4SO,CovLowCM4NAtlantic,CovLowCM4TropicalAtlantic,CovLowCM4SAtlantic,CovLowCM4NPacific,CovLowCM4TropicalPacific,CovLowCM4SPacific,CovLowCM4GOM,CovLowCM4CCS
+# from OptimalArray.Utilities.MOM6Mat import CovMOM6CCS
 
 import gc
 import os
 import shutil
 
 def calculate_cov():
-	for covclass in [CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS]:
+	for covclass in [CovLowCM4Global]:
 		# for depth in [8,26]:
-		for depth in [2,4,6,8,10,12,14,16,18,20,22,24,26]:
+		for depth in [4]:
 			print('depth idx is '+str(depth))
 			dummy = covclass(depth_idx = depth)
 			if os.path.isfile(dummy.trans_geo.make_inverse_filename()):

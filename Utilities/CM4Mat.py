@@ -14,7 +14,7 @@ class CovCM4(CovArray):
 	data_directory = os.path.join(get_data_folder(),'Processed/CM4/')
 	chl_depth_idx = 10
 	from OptimalArray.__init__ import ROOT_DIR
-	label = 'cm4'
+	label = 'cm4_full'
 	max_depth_lev = 25  #this corresponds to 2062.5 meters 
 
 	def __init__(self,*args,depth_idx=0,**kwargs):
@@ -36,7 +36,7 @@ class CovCM4(CovArray):
 			if self.trans_geo.depth_idx>=self.chl_depth_idx:
 				if variable=='chl':
 					continue
-			for file in files:
+			for file in sorted(files):
 				print(file)
 				dh = Dataset(file)
 				time_list.append(dh['time'][0])
@@ -156,6 +156,12 @@ class CovCM4(CovArray):
 		for file in os.listdir(CovCM4.data_directory):
 			if '.DS_Store' in file:
 				continue
+			if 'mean.pkl' in file:
+				continue
+			if 'var.pkl' in file:
+				continue
+			if 'int.pkl' in file:
+				continue
 			filename = os.path.join(CovCM4.data_directory,file)
 			filename = filename
 			var = file.split('_')[0]
@@ -231,6 +237,181 @@ class CovCM4GOM(CovCM4):
 		super().__init__(*args,**kwargs)
 
 class CovCM4CCS(CovCM4):
+	trans_geo_class = InverseCCS
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovCM4LowCorrelation(CovCM4):
+	covariance_scale = 0.3
+	label = 'cm4_low'
+
+class CovLowCM4Global(CovCM4LowCorrelation):
+	trans_geo_class = InverseGlobal
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4Indian(CovCM4LowCorrelation):
+	trans_geo_class = InverseIndian
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4SO(CovCM4LowCorrelation):
+	trans_geo_class = InverseSO
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4NAtlantic(CovCM4LowCorrelation):
+	trans_geo_class = InverseNAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4TropicalAtlantic(CovCM4LowCorrelation):
+	trans_geo_class = InverseTropicalAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4SAtlantic(CovCM4LowCorrelation):
+	trans_geo_class = InverseSAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4NPacific(CovCM4LowCorrelation):
+	trans_geo_class = InverseNPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4TropicalPacific(CovCM4LowCorrelation):
+	trans_geo_class = InverseTropicalPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4SPacific(CovCM4LowCorrelation):
+	trans_geo_class = InverseSPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4GOM(CovCM4LowCorrelation):
+	trans_geo_class = InverseGOM
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4CCS(CovCM4LowCorrelation):
+	trans_geo_class = InverseCCS
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+
+class CovCM4MediumCorrelation(CovCM4):
+	covariance_scale = 0.5
+	label = 'cm4_med'
+
+class CovMediumCM4Global(CovCM4MediumCorrelation):
+	trans_geo_class = InverseGlobal
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovMediumCM4Indian(CovCM4MediumCorrelation):
+	trans_geo_class = InverseIndian
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovMediumCM4SO(CovCM4MediumCorrelation):
+	trans_geo_class = InverseSO
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovMediumCM4NAtlantic(CovCM4MediumCorrelation):
+	trans_geo_class = InverseNAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovMediumCM4TropicalAtlantic(CovCM4MediumCorrelation):
+	trans_geo_class = InverseTropicalAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovMediumCM4SAtlantic(CovCM4MediumCorrelation):
+	trans_geo_class = InverseSAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovMediumCM4NPacific(CovCM4MediumCorrelation):
+	trans_geo_class = InverseNPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovMediumCM4TropicalPacific(CovCM4MediumCorrelation):
+	trans_geo_class = InverseTropicalPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovMediumCM4SPacific(CovCM4MediumCorrelation):
+	trans_geo_class = InverseSPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovMediumCM4GOM(CovCM4MediumCorrelation):
+	trans_geo_class = InverseGOM
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovMediumCM4CCS(CovCM4MediumCorrelation):
+	trans_geo_class = InverseCCS
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+
+
+class CovCM4HighCorrelation(CovCM4):
+	covariance_scale = 0.7
+	label = 'cm4_high'
+
+class CovHighCM4Indian(CovCM4HighCorrelation):
+	trans_geo_class = InverseIndian
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovHighCM4SO(CovCM4HighCorrelation):
+	trans_geo_class = InverseSO
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovHighCM4NAtlantic(CovCM4HighCorrelation):
+	trans_geo_class = InverseNAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovHighCM4TropicalAtlantic(CovCM4HighCorrelation):
+	trans_geo_class = InverseTropicalAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovHighCM4SAtlantic(CovCM4HighCorrelation):
+	trans_geo_class = InverseSAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovHighCM4NPacific(CovCM4HighCorrelation):
+	trans_geo_class = InverseNPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovHighCM4TropicalPacific(CovCM4HighCorrelation):
+	trans_geo_class = InverseTropicalPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovHighCM4SPacific(CovCM4HighCorrelation):
+	trans_geo_class = InverseSPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovHighCM4GOM(CovCM4HighCorrelation):
+	trans_geo_class = InverseGOM
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovHighCM4CCS(CovCM4HighCorrelation):
 	trans_geo_class = InverseCCS
 	def __init__(self,*args,**kwargs):
 		super().__init__(*args,**kwargs)

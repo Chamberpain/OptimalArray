@@ -1,6 +1,6 @@
-from OptimalArray.Utilities.CorMat import CovCM4Global,CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS
+from OptimalArray.Utilities.CM4Mat import CovCM4Global,CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS
 from OptimalArray.Utilities.H import HInstance
-from GeneralUtilities.Filepath.search import find_files
+from GeneralUtilities.Data.Filepath.search import find_files
 import matplotlib.pyplot as plt
 import numpy as np 
 import uuid
@@ -12,7 +12,7 @@ from matplotlib.colors import ListedColormap
 
 plt.rcParams['font.size'] = '30'
 
-title_dict = {'total_variance': 'Total','o2':'$O_2$','so':'Salinity','ph':'pH','chl':'Chlorophyll','thetao':'$T_0$','ccs':'California Coastal Current','global':'Global',
+title_dict = {'total_variance': 'Total','o2':'$O_2$','so':'Salinity','ph':'pH','chl':'Chlorophyll','thetao':'$T_0$','po4':'Nitrate','ccs':'California Coastal Current','global':'Global',
 'gom':'Gulf of Mexico','indian':'Indian','north_atlantic':'North Atlantic','north_pacific':'North Pacific','south_atlantic':'South Atlantic','south_pacific':'South Pacific'
 ,'southern_ocean':'Southern Ocean','tropical_atlantic':'Tropical Atlantic','tropical_pacific':'Tropical Pacific'}
 
@@ -38,6 +38,7 @@ def plot_and_save(data_array,XX,YY,filename,title):
 	plt.ylabel('Depth (m)')
 	plt.xlabel('Core Argo Float Spacing')
 	plt.title(title)
+	print('saving ',filename)
 	plt.savefig(filename)
 	plt.close()
 

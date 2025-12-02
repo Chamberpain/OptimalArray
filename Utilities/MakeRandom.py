@@ -1,10 +1,12 @@
 from OptimalArray.Utilities.CorMat import InverseInstance
 from OptimalArray.Utilities.CM4Mat import CovCM4Global,CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS
-from OptimalArray.Utilities.MOM6Mat import CovMOM6CCS, CovMOM6GOM, InverseGOM
+# from OptimalArray.Utilities.MOM6Mat import CovMOM6CCS, CovMOM6GOM, InverseGOM
+# from OptimalArray.Utilities.CM4Mat import CovLowCM4Indian,CovLowCM4SO,CovLowCM4NAtlantic,CovLowCM4TropicalAtlantic,CovLowCM4SAtlantic,CovLowCM4NPacific,CovLowCM4TropicalPacific,CovLowCM4SPacific,CovLowCM4GOM,CovLowCM4CCS
 from OptimalArray.Utilities.H import HInstance,Float
 from OptimalArray.Utilities.Data.__init__ import ROOT_DIR
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from GeneralUtilities.Data.pickle_utilities import save,load
+from GeneralUtilities.Compute.list import GeoList, VariableList
 import numpy as np
 import scipy
 from GeneralUtilities.Compute.list import VariableList
@@ -39,61 +41,68 @@ def save_array(cov_holder,H_out,p_hat_out,kk,label,type):
 	print('saved H instance '+str(kk))
 	save(filepath,data)
 
-def make_random(cov=CovMOM6CCS, plot=False):
-	for depth_idx in [4,16]:
-		cov_holder = cov.load(depth_idx = depth_idx)
-		for float_num in [5]:
-			for kk in range(10):
-				print ('depth = '+str(depth_idx)+', float_num = '+str(float_num)+', kk = '+str(kk))
-				label = cov.label+'_'+cov.trans_geo_class.region+'_'+'random_'+str(float_num)
-				filepath = make_filename(cov.trans_geo_class.region,label,cov_holder.trans_geo.depth_idx,kk)
-				print(filepath)
-				if os.path.exists(filepath):
-					try:
-						h_index,p_hat =load(filepath)
-					except:
-						os.remove(filepath)
-					continue
-				save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
-				H_random = HInstance.random_floats(cov_holder.trans_geo, float_num, [1]*len(cov_holder.trans_geo.variable_list))
-				if float_num ==0: 
-					save_array(cov_holder,H_random,cov_holder.cov,kk,label)
-				else:
-					p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
-					save_array(cov_holder,H_random,p_hat_random,kk,label)
-				if plot:
-					var_len = len(cov_holder.trans_geo.total_list)
-					var_idx = np.linspace(0,5*var_len,6)
-					p_hat_ox = p_hat_random[int(var_idx[4]):int(var_idx[5]),int(var_idx[4]):int(var_idx[5])]
-					cov_ox = cov_holder.get_cov('o2','o2')
+# def make_random(cov=CovMOM6CCS, plot=False):
+# 	for depth_idx in [4,16]:
+# 		cov_holder = cov.load(depth_idx = depth_idx)
+# 		for float_num in [5]:
+# 			for kk in range(10):
+# 				print ('depth = '+str(depth_idx)+', float_num = '+str(float_num)+', kk = '+str(kk))
+# 				label = cov.label+'_'+cov.trans_geo_class.region+'_'+'random_'+str(float_num)
+# 				filepath = make_filename(cov.trans_geo_class.region,label,cov_holder.trans_geo.depth_idx,kk)
+# 				print(filepath)
+# 				if os.path.exists(filepath):
+# 					try:
+# 						h_index,p_hat =load(filepath)
+# 					except:
+# 						os.remove(filepath)
+# 					continue
+# 				save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
+# 				H_random = HInstance.random_floats(cov_holder.trans_geo, float_num, [1]*len(cov_holder.trans_geo.variable_list))
+# 				if float_num ==0: 
+# 					save_array(cov_holder,H_random,cov_holder.cov,kk,label)
+# 				else:
+# 					p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
+# 					save_array(cov_holder,H_random,p_hat_random,kk,label)
+# 				if plot:
+# 					var_len = len(cov_holder.trans_geo.total_list)
+# 					var_idx = np.linspace(0,5*var_len,6)
+# 					p_hat_ox = p_hat_random[int(var_idx[4]):int(var_idx[5]),int(var_idx[4]):int(var_idx[5])]
+# 					cov_ox = cov_holder.get_cov('o2','o2')
 
-					cov_ox_reshaped = cov_holder.trans_geo.transition_vector_to_plottable(cov_ox.diagonal())
-					p_hat_ox_reshaped = cov_holder.trans_geo.transition_vector_to_plottable(p_hat_ox.diagonal())
+# 					cov_ox_reshaped = cov_holder.trans_geo.transition_vector_to_plottable(cov_ox.diagonal())
+# 					p_hat_ox_reshaped = cov_holder.trans_geo.transition_vector_to_plottable(p_hat_ox.diagonal())
 
-					lats = cov_holder.trans_geo.get_lat_bins()
-					lons = cov_holder.trans_geo.get_lon_bins()
+# 					lats = cov_holder.trans_geo.get_lat_bins()
+# 					lons = cov_holder.trans_geo.get_lon_bins()
 
-					XX,YY = np.meshgrid(lons,lats)
+# 					XX,YY = np.meshgrid(lons,lats)
 
-					plt.pcolor(XX,YY,p_hat_ox_reshaped/cov_ox_reshaped)
+# 					plt.pcolor(XX,YY,p_hat_ox_reshaped/cov_ox_reshaped)
 
-					x = [x.longitude for x in H_random.return_pos_of_bgc()]
-					y = [x.latitude for x in H_random.return_pos_of_bgc()]
+# 					x = [x.longitude for x in H_random.return_pos_of_bgc()]
+# 					y = [x.latitude for x in H_random.return_pos_of_bgc()]
 
-					plt.scatter(x,y)
-					plt.colorbar()
+# 					plt.scatter(x,y)
+# 					plt.colorbar()
 
 
 def make_different_variable_optimization(plot=False):
+	plot=False
 	percent_list = [0,0.33,0.66,1]
-	for cov in [CovCM4Indian,CovCM4SO,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,CovCM4GOM,CovCM4CCS]:
-		for depth_idx in [2,4,6,8,10,12,14,16,18,20,22,24,26]:
+	percent_list_low = [0,0.33,0.66,1]
+#,CovCM4GOM,CovCM4CCS
+	for cov in [
+#	CovCM4SO,CovCM4Indian,CovCM4NAtlantic,CovCM4TropicalAtlantic,CovCM4SAtlantic,
+	CovCM4NPacific,CovCM4TropicalPacific,CovCM4SPacific,
+	CovCM4GOM,CovCM4CCS]:
+#2,4,6,8,10,12,14,16,18,20,22,24,26]:
+		for depth_idx in [2,6,14,18]:
 			cov_holder = cov.load(depth_idx = depth_idx)
-			for float_num in range(0,110,10):
+			for float_num in range(0,310,20):
 				for kk in range(5):
 					for ph_percent in percent_list:
 						for o2_percent in percent_list:
-							for po4_percent in percent_list:
+							for po4_percent in percent_list_low:
 								if depth_idx > 8:
 									H_random = HInstance.random_floats(cov_holder.trans_geo, float_num, [po4_percent,1,1,ph_percent,o2_percent])
 									label = cov.label+'/'+cov.trans_geo_class.region+'/'+'ph'+str(ph_percent)+'_o2'+str(o2_percent)+'_po4'+str(po4_percent)+'_num'+str(float_num)
@@ -102,20 +111,29 @@ def make_different_variable_optimization(plot=False):
 									if os.path.exists(filepath):
 										if plot:
 											H_out,p_hat_diagonal = load_array('instrument',cov_holder,kk,label)
+										# if os.path.getsize(filepath) < 500:
+										# 	print('I have removed')
+										# 	print(filepath)
+										# 	os.remove(filepath)
 										continue
 									try:
 										save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
 									except FileNotFoundError:
 										dir_path = os.path.dirname(filepath)
-										os.makedirs(dir_path)
-										save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
+										try: 
+											os.makedirs(dir_path)
+											save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
+										except FileExistsError:
+											continue
+									except FileExistsError:
+										continue
 									if float_num ==0: 
 										save_array(cov_holder,H_random,cov_holder.cov,kk,label,'instrument')
 									else:
 										p_hat_random = make_P_hat(cov_holder.cov,H_random,noise_factor=4)
 										save_array(cov_holder,H_random,p_hat_random,kk,label,'instrument')
 								else:
-									for chl_percent in percent_list:
+									for chl_percent in percent_list_low:
 										H_random = HInstance.random_floats(cov_holder.trans_geo, float_num, [po4_percent,1,1,ph_percent,chl_percent,o2_percent])
 										label = cov.label+'/'+cov.trans_geo_class.region+'/'+'ph'+str(ph_percent)+'_o2'+str(o2_percent)+'_po4'+str(po4_percent)+'_chl'+str(chl_percent)+'_num'+str(float_num)
 										filepath = make_filename('instrument',label,cov_holder.trans_geo.depth_idx,kk)
@@ -127,14 +145,21 @@ def make_different_variable_optimization(plot=False):
 												total_p = np.sum(np.split(cov_holder.cov.diagonal(),len(cov_holder.trans_geo.variable_list)),axis=0)
 												mapping_error = total_p_hat/total_p
 												mapping_error = cov_holder.trans_geo.transition_vector_to_plottable(mapping_error)
-
+											# if os.path.getsize(filepath) < 500:
+											# 	print('I have removed')
+											# 	os.remove(filepath)
 											continue
 										try:
 											save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
 										except FileNotFoundError:
 											dir_path = os.path.dirname(filepath)
-											os.makedirs(dir_path)
-											save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
+											try: 
+												os.makedirs(dir_path)
+												save(filepath,[]) # create holder so when this is run in parallel work isnt repeated
+											except FileExistsError:
+												continue
+										except FileExistsError:
+											continue
 										if float_num ==0: 
 											save_array(cov_holder,H_random,cov_holder.cov,kk,label,'instrument')
 										else:
@@ -181,3 +206,4 @@ def make_different_variable_optimization_plot():
 	ax.scatter(lons, lats,marker='*',c='r')
 	fig.colorbar(cax, label = 'Mapping Error (%)')
 	plt.show()
+# make_different_variable_optimization()

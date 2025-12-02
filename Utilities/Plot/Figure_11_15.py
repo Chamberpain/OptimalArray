@@ -1,8 +1,7 @@
 from TransitionMatrix.Utilities.ArgoData import Core, BGC
 from OptimalArray.Utilities.CM4Mat import CovCM4Global
-from GeneralUtilities.Data.lagrangian.argo.argo_read import ArgoReader
-from GeneralUtilities.Data.lagrangian.bgc.bgc_read import BGCReader
-from GeneralUtilities.Data.lagrangian.argo.argo_read import full_argo_list, aggregate_argo_list
+from GeneralUtilities.Data.Lagrangian.Argo.argo_read import ArgoReader
+# from GeneralUtilities.Data.Lagrangian.Argo.argo_read import full_argo_list, aggregate_argo_list
 from GeneralUtilities.Compute.list import VariableList
 from OptimalArray.Utilities.H import Float,HInstance
 from OptimalArray.Utilities.Utilities import make_P_hat
@@ -16,7 +15,7 @@ from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR as PLOT_DIR
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from OptimalArray.Data.__init__ import ROOT_DIR
 from GeneralUtilities.Data.pickle_utilities import save,load
-data_file_handler = FilePathHandler(ROOT_DIR,'CurrentArgo')
+# data_file_handler = FilePathHandler(ROOT_DIR,'CurrentArgo')
 plt.rcParams['font.size'] = '16'
 plot_handler = FilePathHandler(PLOT_DIR,'final_figures')
 variable_translation_dict = {'TEMP':'thetao','PSAL':'so','PH_IN_SITU_TOTAL':'ph','CHLA':'chl','DOXY':'o2'}

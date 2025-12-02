@@ -21,7 +21,7 @@ class Float():
 		self.ID = ID
 		self.date_deployed = date_deployed
 		if date_deployed:
-			self.date_death = self.date_deployed+datetime.timedelta(days=(365*5))
+			self.date_death = self.date_deployed+datetime.timedelta(days=(365*7))
 		else:
 			self.date_death = None
 			
@@ -54,7 +54,7 @@ class HInstance():
 		return GeoList(pos_list)
 
 	def return_pos_of_bgc(self):
-		mask = [x for x in self._index_of_sensors if len(x)>=3]
+		mask = [len(x)>3 for x in self._index_of_sensors]
 		pos_list = [x.pos for x,y in zip(self._list_of_floats,mask) if y]
 		return GeoList(pos_list)
 

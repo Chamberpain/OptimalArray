@@ -1,14 +1,14 @@
 from OptimalArray.Utilities.CM4Mat import CovCM4Global,CovCM4NPacific
 from OptimalArray.Utilities.H import HInstance, Float
 import datetime
-from OptimalArray.Utilities.Plot.Figure_11_15 import make_recent_float_H
+# from OptimalArray.Utilities.Plot.Figure_11_15 import make_recent_float_H
 import matplotlib.pyplot as plt
 import numpy as np
 from GeneralUtilities.Compute.list import VariableList,GeoList
-from GeneralUtilities.Data.lagrangian.argo.argo_read import ArgoReader,aggregate_argo_list,full_argo_list
+from GeneralUtilities.Data.Lagrangian.Argo.argo_read import ArgoReader
 from TransitionMatrix.Utilities.ArgoData import Core,BGC
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler, make_folder_if_does_not_exist
-from OptimalArray.Data.__init__ import ROOT_DIR
+from OptimalArray.Utilities.Data.__init__ import ROOT_DIR
 from OptimalArray.Utilities.Plot.__init__ import ROOT_DIR as PLOT_DIR
 from OptimalArray.Utilities.Utilities import make_P_hat
 from TransitionMatrix.Utilities.TransMat import TransMat
@@ -46,7 +46,7 @@ class FutureFloatTrans(TransMat):
 		self.days = days
 		self.east_west = east_west
 		self.north_south = north_south
-		self.date = datetime.datetime(2021, 5, 10)+datetime.timedelta(days = days)
+		self.date = datetime.datetime(2025, 6, 10)+datetime.timedelta(days = days)
 
 	def advance_float(self,dummy_float,lon_coords,lat_coords,model_trans_geo):
 
@@ -191,14 +191,14 @@ def make_movie_float(cov_holder,future_H_list,label,nn):
 		os.system("ffmpeg -r 5 -i %01d.png -vcodec mpeg4 -y movie.mp4")
 
 
-
-trans_mat = FutureFloatTrans.load_from_type(lat_spacing=2,lon_spacing=2,time_step=90)
-trans_list = []
-for x in range(16):
-	trans_holder = trans_mat.multiply(x,value=0.00001)
-	trans_holder.setup(days = 90*(1+x))
-	trans_list.append(trans_holder)
-
+def trans_list():
+	trans_mat = FutureFloatTrans.load_from_type(lat_spacing=2,lon_spacing=2,time_step=90)
+	trans_list = []
+	for x in range(16):
+		trans_holder = trans_mat.multiply(x,value=0.00001)
+		trans_holder.setup(days = 90*(1+x))
+		trans_list.append(trans_holder)
+	return trans_list
 
 def make_movies():
 	for depth in [2,4,6,8,10,12,14,16,18,20,22,24]:

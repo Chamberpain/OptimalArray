@@ -12,6 +12,7 @@ from itertools import combinations
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 import geopy
 import pickle
+import gc
 
 
 class InverseInstance(scipy.sparse.csc_matrix):
@@ -203,9 +204,11 @@ class CovElement(np.ndarray):
 
 
 class CovArray(object):
+	covariance_scale = 1
+
 	def __init__(self,*args,depth_idx=0,variable_list = None,**kwargs):
 
-		self.trans_geo = self.trans_geo_class(depth_idx = depth_idx,variable_list=variable_list)
+		self.trans_geo = self.trans_geo_class(depth_idx = depth_idx,variable_list=variable_list,model_type = self.label)
 		truth_array,index_list = self.dimensions_and_masks()
 		self.trans_geo.set_total_list(index_list)
 		self.trans_geo.set_truth_array(truth_array)
@@ -239,6 +242,10 @@ class CovArray(object):
 			CovElement(ur,trans_geo=self.trans_geo,row_var=variable_1,col_var=variable_2).save()
 			CovElement(ul,trans_geo=self.trans_geo,row_var=variable_1,col_var=variable_1).save()
 			CovElement(lr,trans_geo=self.trans_geo,row_var=variable_2,col_var=variable_2).save()
+		del array_variable_list
+		gc.collect(generation=2)
+
+
 
 	def normalize_data(self,data,lower_percent=0.85,upper_percent = 0.90, scale=1):
 		mean_removed = data-data.mean(axis=0)
@@ -360,10 +367,10 @@ class CovArray(object):
 
 	def make_scaling(self,holder):
 #Turns single dimensional matrix into a matrix the size of the full covariance matrix
-		cov_scale = 1
+
 		total_list = []
 		for k in range(len(self.trans_geo.variable_list)):
-			temp_list = [cov_scale*scipy.sparse.csc_matrix(holder)]*len(self.trans_geo.variable_list)
+			temp_list = [self.covariance_scale*scipy.sparse.csc_matrix(holder)]*len(self.trans_geo.variable_list)
 			temp_list[k] = scipy.sparse.csc_matrix(holder) # allows the covariance of cross variables to be reduced
 			total_list.append(temp_list)
 		return scipy.sparse.bmat(total_list)
