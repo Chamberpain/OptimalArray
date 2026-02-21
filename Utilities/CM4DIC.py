@@ -1,3 +1,6 @@
+import os
+os.environ['PROJ_LIB'] = '/home/pachamberlain/miniconda3/envs/optimal_array/share/proj'
+
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
 from OptimalArray.Utilities.CorMat import CovArray,InverseInstance
 from GeneralUtilities.Compute.list import GeoList, VariableList
@@ -8,7 +11,7 @@ import numpy as np
 import geopy
 import gsw
 from GeneralUtilities.Data.Filepath.instance import get_data_folder
-from OptimalArray.Utilities.CorGeo import InverseGlobal
+from OptimalArray.Utilities.CorGeo import InverseGlobal,InverseGlobalSubsample,InverseIndian,InverseSO,InverseNAtlantic,InverseTropicalAtlantic,InverseSAtlantic,InverseNPacific,InverseTropicalPacific,InverseSPacific,InverseGOM,InverseCCS
 from OptimalArray.Utilities.CM4Mat import CovCM4
 import gc
 import matplotlib.pyplot as plt
@@ -159,29 +162,60 @@ class CovCM4HighCorrelation(CovCM4DIC):
 	covariance_scale = 0.7
 	label = 'cm4dic_high'
 
+class CovLowCM4Indian(CovCM4LowCorrelation):
+	trans_geo_class = InverseIndian
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4SO(CovCM4LowCorrelation):
+	trans_geo_class = InverseSO
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4NAtlantic(CovCM4LowCorrelation):
+	trans_geo_class = InverseNAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4TropicalAtlantic(CovCM4LowCorrelation):
+	trans_geo_class = InverseTropicalAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4SAtlantic(CovCM4LowCorrelation):
+	trans_geo_class = InverseSAtlantic
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4NPacific(CovCM4LowCorrelation):
+	trans_geo_class = InverseNPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4TropicalPacific(CovCM4LowCorrelation):
+	trans_geo_class = InverseTropicalPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4SPacific(CovCM4LowCorrelation):
+	trans_geo_class = InverseSPacific
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4GOM(CovCM4LowCorrelation):
+	trans_geo_class = InverseGOM
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+class CovLowCM4CCS(CovCM4LowCorrelation):
+	trans_geo_class = InverseCCS
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
+
+
 
 def calculate_cov():
-	for covclass in [CovCM4LowCorrelation,CovCM4MediumCorrelation,CovCM4HighCorrelation]:
-
-		print('covariance class is '+str(covclass))
-		dummy = covclass()
-		if os.path.isfile(dummy.trans_geo.make_inverse_filename()):
-			continue
-		try:
-			# dummy.stack_data()
-			dummy.calculate_cov()
-			dummy.scale_cov()
-		except FileNotFoundError:
-			# dummy.stack_data()
-			dummy.calculate_cov()
-			dummy.scale_cov()
-		dummy.save()
-		del dummy
-		gc.collect(generation=2)	
-
-
-def calculate_cov():
-	for covclass in [CovCM4LowCorrelation,CovCM4MediumCorrelation,CovCM4HighCorrelation]:
+	for covclass in [CovCM4LowCorrelation,CovCM4MediumCorrelation]:
 
 		print('covariance class is '+str(covclass))
 		dummy = covclass()
@@ -198,6 +232,26 @@ def calculate_cov():
 		dummy.save()
 		del dummy
 		gc.collect(generation=2)
+
+def calculate_regional_cov():
+	for covclass in [CovLowCM4Indian,CovLowCM4SO,CovLowCM4NAtlantic,CovLowCM4TropicalAtlantic,CovLowCM4SAtlantic,CovLowCM4NPacific,CovLowCM4TropicalPacific,CovLowCM4SPacific,CovLowCM4GOM,CovLowCM4CCS]:
+
+		print('covariance class is '+str(covclass))
+		dummy = covclass()
+		if os.path.isfile(dummy.trans_geo.make_inverse_filename()):
+			continue
+		try:
+			# dummy.stack_data()
+			dummy.calculate_cov()
+			dummy.scale_cov()
+		except FileNotFoundError:
+			# dummy.stack_data()
+			dummy.calculate_cov()
+			dummy.scale_cov()
+		dummy.save()
+		del dummy
+		gc.collect(generation=2)
+
 
 def plot_covariances():
 	name_dict = {'spco2':'Surface PCO2','po4':'Nitrate Inventory','thetao':'Temperature Inventory'

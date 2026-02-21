@@ -1,5 +1,6 @@
 from OptimalArray.Utilities.CorGeo import InverseGlobal,InverseGlobalSubsample,InverseIndian,InverseSO,InverseNAtlantic,InverseTropicalAtlantic,InverseSAtlantic,InverseNPacific,InverseTropicalPacific,InverseSPacific,InverseGOM,InverseCCS
 from GeneralUtilities.Data.Filepath.instance import FilePathHandler
+from GeneralUtilities.Data.Mapped.cm4 import CM4PC02,CM4O2,CM4PO4,CM4ThetaO,CM4Sal,CM4PH,CM4CHL,CM4DIC,get_filenames,data_directory
 from OptimalArray.Utilities.CorMat import CovArray,InverseInstance
 from GeneralUtilities.Compute.list import GeoList, VariableList
 from netCDF4 import Dataset
@@ -8,11 +9,10 @@ import os
 import numpy as np
 import geopy
 import gsw
-from GeneralUtilities.Data.Filepath.instance import get_data_folder
 
 class CovCM4(CovArray):
-	data_directory = os.path.join(get_data_folder(),'Processed/CM4/')
 	chl_depth_idx = 10
+	data_directory = data_directory
 	from OptimalArray.__init__ import ROOT_DIR
 	label = 'cm4_full'
 	max_depth_lev = 25  #this corresponds to 2062.5 meters 
@@ -102,11 +102,12 @@ class CovCM4(CovArray):
 		plt.colorbar(location='bottom',label='$(kg\ m^{-3})^2$')
 		plt.savefig(file_handler.out_file('density_'+str(self.trans_geo.depth_idx)))
 
-	def get_depth_mask(self):
-		var,files = self.get_filenames()[0]
+	@classmethod
+	def get_depth_mask(cls):
+		var,files = cls.get_filenames()[0]
 		file = files[0]
 		dh = Dataset(str(file))
-		temp = dh[var][:,self.max_depth_lev,:,:]
+		temp = dh[var][:,cls.max_depth_lev,:,:]
 		depth_mask = ~temp.mask[0] # no need to grab values deepeer than 2000 meters
 		return depth_mask
 
@@ -118,11 +119,11 @@ class CovCM4(CovArray):
 		depth_mask = self.get_depth_mask()
 		X,Y = np.meshgrid(np.floor(dh['lon'][:].data),np.floor(dh['lat'][:]).data)
 		X[X>=180] = X[X>=180]-360
-		lat_grid = self.trans_geo.get_lat_bins()
-		lon_grid = self.trans_geo.get_lon_bins()
+		lat_grid = self.trans_geo_class.get_lat_bins()
+		lon_grid = self.trans_geo_class.get_lon_bins()
 
 		subsample_mask = ((np.isin(X, lon_grid))&(np.isin(Y, lat_grid)))
-		geolist = GeoList([geopy.Point(x) for x in list(zip(Y.ravel(),X.ravel()))],lat_sep=self.trans_geo.lat_sep,lon_sep=self.trans_geo.lon_sep)
+		geolist = GeoList([geopy.Point(x) for x in list(zip(Y.ravel(),X.ravel()))],lat_sep=self.trans_geo_class.lat_sep,lon_sep=self.trans_geo_class.lon_sep)
 		oceans_list = []
 		for k,dummy in enumerate(geolist.to_shapely()):
 			oceans_list.append(self.trans_geo.ocean_shape.contains(dummy))	# only choose coordinates within the ocean basin of interest
@@ -130,9 +131,13 @@ class CovCM4(CovArray):
 		total_mask = (depth_mask)&(subsample_mask)&(np.array(oceans_list).reshape(X.shape))
 		X = X[total_mask]
 		Y = Y[total_mask]
-		geolist = GeoList([geopy.Point(x) for x in list(zip(Y,X))],lat_sep=self.trans_geo.lat_sep,lon_sep=self.trans_geo.lon_sep)
+		geolist = GeoList([geopy.Point(x) for x in list(zip(Y,X))],lat_sep=self.trans_geo_class.lat_sep,lon_sep=self.trans_geo_class.lon_sep)
 
 		return (total_mask,geolist)
+
+	@staticmethod
+	def get_filenames():
+		return get_filenames()
 
 	@staticmethod
 	def get_depths():
@@ -149,27 +154,6 @@ class CovCM4(CovArray):
 			dh = Dataset(filename)
 			var_list.append(dh[var].units)
 		return var_list
-		
-	@staticmethod
-	def get_filenames():
-		master_dict = {}
-		for file in os.listdir(CovCM4.data_directory):
-			if '.DS_Store' in file:
-				continue
-			if 'mean.pkl' in file:
-				continue
-			if 'var.pkl' in file:
-				continue
-			if 'int.pkl' in file:
-				continue
-			filename = os.path.join(CovCM4.data_directory,file)
-			filename = filename
-			var = file.split('_')[0]
-			try:
-				master_dict[var].append(filename)
-			except KeyError:
-				master_dict[var] = [filename]
-		return list(master_dict.items())
 
 	@classmethod
 	def load(cls,depth_idx):

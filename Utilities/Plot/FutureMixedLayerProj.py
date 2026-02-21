@@ -376,13 +376,13 @@ class NothingAdded_7(NothingAdded):
 	long_name = 'No Added - 7 Yr'
 
 
-def load_or_calculate_phat(filename,cov_holder,future_H):
+def load_or_calculate_phat(filename,cov_holder,future_H,noise_factor=2):
 	try:
 		out= load(filename)
 		print('loaded data')
 	except FileNotFoundError:
 		print('could not load, calculating...')
-		p_hat_array = make_P_hat(cov_holder.cov,future_H,noise_factor=2)
+		p_hat_array = make_P_hat(cov_holder.cov,future_H,noise_factor=noise_factor)
 		out = np.split(p_hat_array.diagonal(),len(cov_holder.trans_geo.variable_list))
 		save(filename,out)
 		del p_hat_array
@@ -1358,12 +1358,12 @@ def heat_plots():
 		XX,YY,ax0 = plot_holder.get_map()
 		XX,YY = future_H.trans_geo.get_coords()	
 		ax0.pcolormesh(XX,YY,XX != np.nan,cmap=get_cmap(),alpha=0.7,zorder=-10,transform=ccrs.PlateCarree())
-		pcm = ax0.pcolormesh(XX,YY,data,vmin=-10**19,vmax=6*10**19,cmap='YlOrBr',transform=ccrs.PlateCarree())
+		pcm = ax0.pcolormesh(XX,YY,data/10**19,vmin=-1,vmax=6,cmap='YlOrBr',transform=ccrs.PlateCarree())
 		ax0.scatter(core_list[19][1],core_list[19][0],c='green',s=Core.marker_size,zorder=11,label = 'Core',transform=ccrs.PlateCarree())
 		ax0.scatter(bgc_list[19][1],bgc_list[19][0],c='blue',s=BGC.marker_size,zorder=11,label = 'BGC',transform=ccrs.PlateCarree())
 		ax0.annotate(annotate_label, xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 
-	fig.colorbar(pcm,ax=[ax1,ax2,ax3],label='J',location='right',shrink=0.8)
+	fig.colorbar(pcm,ax=[ax1,ax2,ax3],label='PJ',location='right',shrink=0.8)
 	plt.savefig(plot_handler.out_file('heat_5'))
 	plt.close('all')
 
@@ -1382,12 +1382,12 @@ def heat_plots():
 		XX,YY,ax0 = plot_holder.get_map()
 		XX,YY = future_H.trans_geo.get_coords()	
 		ax0.pcolormesh(XX,YY,XX != np.nan,cmap=get_cmap(),alpha=0.7,zorder=-10,transform=ccrs.PlateCarree())
-		pcm = ax0.pcolormesh(XX,YY,data,vmin=-10**19,vmax=6*10**19,cmap='YlOrBr',transform=ccrs.PlateCarree())
+		pcm = ax0.pcolormesh(XX,YY,data/10**19,vmin=-1,vmax=6,cmap='YlOrBr',transform=ccrs.PlateCarree())
 		ax0.scatter(core_list[19][1],core_list[19][0],c='green',s=Core.marker_size,zorder=11,label = 'Core',transform=ccrs.PlateCarree())
 		ax0.scatter(bgc_list[19][1],bgc_list[19][0],c='blue',s=BGC.marker_size,zorder=11,label = 'BGC',transform=ccrs.PlateCarree())
 		ax0.annotate(annotate_label, xy = (0.17,0.9),xycoords='axes fraction',zorder=11,size=32,bbox=dict(boxstyle="round", fc="0.8"),)
 
-	fig.colorbar(pcm,ax=[ax1,ax2,ax3],label='J',location='right',shrink=0.8)
+	fig.colorbar(pcm,ax=[ax1,ax2,ax3],label='PJ',location='right',shrink=0.8)
 	plt.savefig(plot_handler.out_file('heat_7'))
 	plt.close('all')
 
