@@ -168,4 +168,4 @@ def make_different_variable_optimization_plot():
 	ax.scatter(lons, lats,marker='*',c='r')
 	fig.colorbar(cax, label = 'Mapping Error (%)')
 	plt.show()
-# make_different_variable_optimization()
+make_different_variable_optimization()
